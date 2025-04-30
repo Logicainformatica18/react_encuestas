@@ -25,7 +25,11 @@ const mainNavItems: NavItem[] = [
         href: '/users',
         icon: Folder, // Puedes cambiar esto por otro ícono si deseas
     },
-
+    {
+        title: 'Encuestas',
+        href: '/surveys',
+        icon: Folder, // Puedes cambiar esto por otro ícono si deseas
+    },
 
 ];
 

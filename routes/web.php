@@ -2,6 +2,7 @@
     use App\Http\Controllers\TransferController;
     use App\Http\Controllers\UserController;
     use App\Http\Controllers\ProductController;
+    use App\Http\Controllers\SurveyController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ArticleController;
@@ -39,9 +40,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 
-   
+
     Route::get('/products/search', [ProductController::class, 'searchByDescription']);
-        
+
     Route::get('/products/fetch', [ProductController::class, 'fetchPaginated'])->name('products.fetch');
     Route::post('/products', [ProductController::class, 'store'])->middleware(['auth', 'verified']);
     Route::get('/products', [ProductController::class, 'index'])->middleware(['auth', 'verified'])->name('products.index');
@@ -50,10 +51,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/products/{id}', [ProductController::class, 'show']);
     Route::post('/products/bulk-delete', [ProductController::class, 'bulkDelete']);
     Route::get('/products/{id}/export-excel', [ProductController::class, 'exportExcel']);
-   
+
     Route::post('/articles/bulk-store', [ArticleController::class, 'bulkStore']);
 
-  
+
 
 
 
@@ -80,6 +81,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
  //   Route::get('/transfers/export/excel', [TransferController::class, 'exportExcel']);
     Route::post('/transfers/{id}/notify', [TransferController::class, 'notify']);
 
+
+
+
+
+
+
+Route::get('/surveys/fetch', [SurveyController::class, 'fetchPaginated'])->name('surveys.fetch');
+Route::post('/surveys', [SurveyController::class, 'store'])->middleware(['auth', 'verified']);
+Route::get('/surveys', [SurveyController::class, 'index'])->middleware(['auth', 'verified'])->name('surveys.index');
+Route::delete('/surveys/{id}', [SurveyController::class, 'destroy']);
+Route::post('/surveys/{id}', [SurveyController::class, 'update']); // Puedes usar PUT si tu controlador lo soporta
+Route::get('/surveys/{id}', [SurveyController::class, 'show']);
+Route::post('/surveys/bulk-delete', [SurveyController::class, 'bulkDelete']);
 
 
 });
