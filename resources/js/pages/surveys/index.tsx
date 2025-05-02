@@ -164,12 +164,15 @@ export default function Surveys() {
                     />
                   </td>
                   <td className="px-4 py-2 text-sm space-y-1">
-                    <button
-                      onClick={() => router.visit(`/surveys/${s.id}/details`)}
-                      className="block text-center w-full bg-black-400 text-black px-2 py-1 rounded hover:bg-yellow-500"
-                    >
-                      Ver preguntas
-                    </button>
+                   <button
+
+
+  onClick={() => router.visit(`/survey-details/${s.id}`)}
+  className="block text-center w-full bg-yellow-500 text-black px-2 py-1 rounded hover:bg-yellow-600 transition"
+>
+  Ver preguntas
+</button>
+
                     <button
                       onClick={() => fetchSurvey(s.id)}
                       className="block text-center w-full text-blue-600 hover:underline dark:text-blue-400"

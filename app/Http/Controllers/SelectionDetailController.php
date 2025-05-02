@@ -4,76 +4,97 @@ namespace App\Http\Controllers;
 
 use App\Models\SelectionDetail;
 use App\Models\Selection;
-use App\Http\Requests\StoreSelectionDetailRequest;
-use App\Http\Requests\UpdateSelectionDetailRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\SelectionDetailsExport;
 
 class SelectionDetailController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index($selection_id)
     {
-        //
+        $selection = Selection::findOrFail($selection_id);
+
+        $selectionDetails = SelectionDetail::where('selection_id', $selection_id)
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+
+        return Inertia::render('selection-details/index', [
+            'selectionDetails' => $selectionDetails,
+            'selection' => $selection,
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create($id)
+    public function fetchPaginated(Request $request)
     {
-        $selection = Selection::where('id', '=', $id)->orderBy('description', 'asc')->first();;
-        return view("selection_detailtable", compact("selection"));
+        $selection_id = $request->query('selection_id');
+
+        $selectionDetails = SelectionDetail::where('selection_id', $selection_id)
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+
+        return response()->json(['selectionDetails' => $selectionDetails]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $selection_detail = new SelectionDetail;
-        $selection_detail->description =    $request->description;
-        $selection_detail->detail =         $request->detail;
-        $selection_detail->selection_id =         $request->primary;
-        $selection_detail->associate_detail_id =         $request->associate_detail_id;
-        $selection_detail->save();
+        $request->validate([
+            'description' => 'required|string|max:255',
+            'detail' => 'nullable|string',
+            'selection_id' => 'required|exists:selections,id',
+            'associate_detail_id' => 'nullable|integer',
+        ]);
 
-         return $this->create($selection_detail->selection_id);
-        //return  $request->primary;
+        $selectionDetail = SelectionDetail::create($request->only(
+            'description', 'detail', 'selection_id', 'associate_detail_id'
+        ));
+
+        return response()->json([
+            'message' => '✅ Detalle creado correctamente',
+            'selectionDetail' => $selectionDetail,
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(SelectionDetail $selectionDetail)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'description' => 'required|string|max:255',
+            'detail' => 'nullable|string',
+            'associate_detail_id' => 'nullable|integer',
+        ]);
+
+        $selectionDetail = SelectionDetail::findOrFail($id);
+        $selectionDetail->update($request->only('description', 'detail', 'associate_detail_id'));
+
+        return response()->json([
+            'message' => '✅ Detalle actualizado correctamente',
+            'selectionDetail' => $selectionDetail,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Request $request)
+    public function show($id)
     {
-        $selection = Selection::find($request["id"]);
-        return view("selection_detailtable", compact("selection"));
+        $selectionDetail = SelectionDetail::findOrFail($id);
+        return response()->json(['selectionDetail' => $selectionDetail]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateSelectionDetailRequest $request, SelectionDetail $selectionDetail)
+    public function destroy($id)
     {
-        //
+        SelectionDetail::findOrFail($id)->delete();
+        return response()->json(['success' => true]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Request $request)
+    public function bulkDelete(Request $request)
     {
-        SelectionDetail::find($request->id)->delete();
-        return $this->create($request->primary);
+        $ids = $request->input('ids', []);
+        SelectionDetail::whereIn('id', $ids)->delete();
+
+        return response()->json(['message' => '✅ Detalles eliminados correctamente']);
+    }
+
+    public function exportExcel($selection_id)
+    {
+        return Excel::download(new SelectionDetailsExport($selection_id), "selection_{$selection_id}_detalles.xlsx");
     }
 }

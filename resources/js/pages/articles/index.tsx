@@ -62,7 +62,7 @@ export default function Articles() {
     fetchPage(`/articles/fetch?page=${pagination.current_page}${transfer_id ? `&transfer_id=${transfer_id}` : ''}`);
     setEditArticle(null);
   };
-  
+
 
   const fetchArticle = async (id: number) => {
     const res = await axios.get(`/articles/${id}`);

@@ -12,15 +12,18 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutGrid,
-    },{
-        title: 'Transferencias',
-        href: '/transfers',
-        icon: Folder, // Puedes cambiar esto por otro ícono si deseas
-    },{
-        title: 'Productos',
-        href: '/products',
-        icon: Folder, // Puedes cambiar esto por otro ícono si deseas
-    },{
+    }
+    // },{
+    //     title: 'Transferencias',
+    //     href: '/transfers',
+    //     icon: Folder, // Puedes cambiar esto por otro ícono si deseas
+    // },
+    // ,{
+    //     title: 'Productos',
+    //     href: '/products',
+    //     icon: Folder, // Puedes cambiar esto por otro ícono si deseas
+    // }
+    ,{
         title: 'Usuarios',
         href: '/users',
         icon: Folder, // Puedes cambiar esto por otro ícono si deseas
@@ -30,7 +33,11 @@ const mainNavItems: NavItem[] = [
         href: '/surveys',
         icon: Folder, // Puedes cambiar esto por otro ícono si deseas
     },
-
+    {
+        title: 'Selecciones',
+        href: '/selections',
+        icon: Folder, // Puedes cambiar esto por otro ícono si deseas
+    },
 ];
 
 const footerNavItems: NavItem[] = [

@@ -4,28 +4,39 @@ import { useState } from 'react';
 import { Paintbrush, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import SurveyDetailModal from './modal';
+import { toast } from 'sonner';
 
-type SurveyDetail = {
+interface SurveyDetail {
   id: number;
   question: string;
   type: string;
-  option: string; // JSON string
+  option: string;
   title?: string;
   state?: string;
   evaluate?: string;
   requerid?: string;
-};
+  visible?: string;
+}
+
+interface Pagination<T> {
+  data: T[];
+  current_page: number;
+  last_page: number;
+  next_page_url: string | null;
+  prev_page_url: string | null;
+}
 
 export default function SurveyDetails() {
-  const { surveyDetails: initialData, survey } = usePage<{
-    surveyDetails: SurveyDetail[];
+  const { surveyDetails: initialPagination, survey } = usePage<{
+    surveyDetails: Pagination<SurveyDetail>;
     survey: { id: number; title: string };
   }>().props;
 
-  const [details, setDetails] = useState<SurveyDetail[]>(initialData);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [details, setDetails] = useState<SurveyDetail[]>(initialPagination?.data || []);
+  const [pagination, setPagination] = useState(initialPagination);
   const [showModal, setShowModal] = useState(false);
   const [editDetail, setEditDetail] = useState<SurveyDetail | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const fetchDetail = async (id: number) => {
     const res = await axios.get(`/survey-details/${id}/edit`);
@@ -33,8 +44,49 @@ export default function SurveyDetails() {
     setShowModal(true);
   };
 
-  const handleSaved = () => {
-    window.location.reload(); // o volver a cargar con axios si prefieres
+  const handleSaved = async () => {
+    await fetchPage(`/survey-details/fetch?page=${pagination.current_page}&survey_id=${survey.id}`);
+    setEditDetail(null);
+    setShowModal(false);
+    toast.success('✅ Pregunta guardada');
+  };
+
+  const fetchPage = async (url: string) => {
+    try {
+      const res = await axios.get(url);
+      setDetails(res.data.surveyDetails.data);
+      setPagination(res.data.surveyDetails);
+    } catch (err) {
+      toast.error('❌ Error al cargar página');
+      console.error(err);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`¿Eliminar ${selectedIds.length} preguntas?`)) {
+      try {
+        await axios.post('/survey-details/bulk-delete', { ids: selectedIds });
+        setDetails((prev) => prev.filter((d) => !selectedIds.includes(d.id)));
+        setSelectedIds([]);
+        toast.success('✅ Preguntas eliminadas correctamente');
+      } catch (e) {
+        toast.error('❌ Error al eliminar en lote');
+        console.error(e);
+      }
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm(`¿Eliminar pregunta ID ${id}?`)) {
+      try {
+        await axios.delete(`/survey-details/${id}`);
+        setDetails((prev) => prev.filter((s) => s.id !== id));
+        toast.success('✅ Pregunta eliminada');
+      } catch (e) {
+        toast.error('❌ Error al eliminar');
+        console.error(e);
+      }
+    }
   };
 
   return (
@@ -54,28 +106,23 @@ export default function SurveyDetails() {
 
         {selectedIds.length > 0 && (
           <button
-            onClick={async () => {
-              if (confirm(`¿Eliminar ${selectedIds.length} preguntas?`)) {
-                try {
-                  await Promise.all(
-                    selectedIds.map((id) => axios.delete(`/survey-details/${id}`))
-                  );
-                  setDetails((prev) => prev.filter((d) => !selectedIds.includes(d.id)));
-                  setSelectedIds([]);
-                } catch (e) {
-                  alert('Error al eliminar en lote');
-                  console.error(e);
-                }
-              }
-            }}
+            onClick={handleBulkDelete}
             className="ml-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
           >
             Eliminar seleccionadas
           </button>
         )}
 
+        <a
+          href={`/survey-details/export/${survey.id}`}
+          className="px-4 ml-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+          target="_blank"
+        >
+          Exportar a Excel
+        </a>
+
         <div className="overflow-x-auto mt-4">
-          <table className="min-w-full divide-y divide-gray-200 bg-white dark:bg-black shadow-md rounded">
+          <table className="min-w-full text-sm divide-y divide-gray-200 bg-white dark:bg-black shadow-md rounded">
             <thead className="bg-gray-100 dark:bg-gray-800">
               <tr>
                 <th className="px-4 py-2 text-black dark:text-white">
@@ -92,52 +139,35 @@ export default function SurveyDetails() {
                 <th className="px-4 py-2 text-black dark:text-white">Pregunta</th>
                 <th className="px-4 py-2 text-black dark:text-white">Tipo</th>
                 <th className="px-4 py-2 text-black dark:text-white">Título</th>
-                <th className="px-4 py-2 text-black dark:text-white">Opciones</th>
+                <th className="px-4 py-2 text-black dark:text-white whitespace-pre-wrap break-words max-w-xs">Opciones</th>
               </tr>
             </thead>
             <tbody>
               {details.map((d) => (
-                <tr
-                  key={d.id}
-                  className="border-t hover:bg-gray-50 dark:hover:bg-gray-700 text-black dark:text-white"
-                >
+                <tr key={d.id} className="border-t hover:bg-gray-50 dark:hover:bg-gray-700 text-black dark:text-white">
                   <td className="px-4 py-2">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(d.id)}
                       onChange={(e) =>
                         setSelectedIds((prev) =>
-                          e.target.checked
-                            ? [...prev, d.id]
-                            : prev.filter((id) => id !== d.id)
+                          e.target.checked ? [...prev, d.id] : prev.filter((id) => id !== d.id)
                         )
                       }
                     />
                   </td>
-                  <td className="px-4 py-2 space-x-2 text-sm">
+                  <td className="px-4 py-2 space-y-1">
                     <button
                       onClick={() => fetchDetail(d.id)}
-                      className="text-blue-600 hover:underline dark:text-blue-400 flex items-center gap-1"
+                      className="block w-full text-blue-600 hover:underline dark:text-blue-400"
                     >
-                      <Paintbrush className="w-4 h-4" />
-                      Editar
+                      <Paintbrush className="w-4 h-4 inline" /> Editar
                     </button>
                     <button
-                      onClick={async () => {
-                        if (confirm(`¿Eliminar pregunta "${d.question}"?`)) {
-                          try {
-                            await axios.delete(`/survey-details/${d.id}`);
-                            setDetails((prev) => prev.filter((s) => s.id !== d.id));
-                          } catch (e) {
-                            alert('Error al eliminar');
-                            console.error(e);
-                          }
-                        }
-                      }}
-                      className="text-red-600 hover:underline dark:text-red-400 flex items-center gap-1"
+                      onClick={() => handleDelete(d.id)}
+                      className="block w-full text-red-600 hover:underline dark:text-red-400"
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Eliminar
+                      <Trash2 className="w-4 h-4 inline" /> Eliminar
                     </button>
                   </td>
                   <td className="px-4 py-2">{d.id}</td>
@@ -148,9 +178,9 @@ export default function SurveyDetails() {
                     {(() => {
                       try {
                         const options = JSON.parse(d.option || '[]');
-                        return options.join(', ');
+                        return Array.isArray(options) ? options.join(', ') : '-';
                       } catch {
-                        return '';
+                        return '-';
                       }
                     })()}
                   </td>
@@ -160,19 +190,39 @@ export default function SurveyDetails() {
           </table>
         </div>
 
-        {showModal && (
-          <SurveyDetailModal
-            open={showModal}
-            onClose={() => {
-              setShowModal(false);
-              setEditDetail(null);
-            }}
-            onSaved={handleSaved}
-            detailToEdit={editDetail}
-            surveyId={survey.id}
-          />
-        )}
+        <div className="flex justify-center mt-6 space-x-2">
+          {[...Array(pagination.last_page)].map((_, index) => {
+            const page = index + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => fetchPage(`/survey-details/fetch?page=${page}&survey_id=${survey.id}`)}
+                className={`px-3 py-1 rounded text-sm font-medium transition ${
+                  pagination.current_page === page
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
+                disabled={pagination.current_page === page}
+              >
+                {page}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {showModal && (
+        <SurveyDetailModal
+          open={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setEditDetail(null);
+          }}
+          onSaved={handleSaved}
+          detailToEdit={editDetail}
+          surveyId={survey.id}
+        />
+      )}
     </AppLayout>
   );
 }

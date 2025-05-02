@@ -4,6 +4,9 @@
     use App\Http\Controllers\ProductController;
     use App\Http\Controllers\SurveyController;
     use App\Http\Controllers\SurveyDetailController;
+    use App\Http\Controllers\SelectionController;
+use App\Http\Controllers\SelectionDetailController;
+
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ArticleController;
@@ -97,14 +100,43 @@ Route::get('/surveys/{id}', [SurveyController::class, 'show']);
 Route::post('/surveys/bulk-delete', [SurveyController::class, 'bulkDelete']);
 
 
-Route::get('/surveys/{survey}/details', [SurveyDetailController::class, 'details'])->name('surveys.details');
+// Ruta para ver detalles de un survey específico
+// Mostrar preguntas de una encuesta específica
+Route::get('/survey-details/fetch', [SurveyDetailController::class, 'fetchPaginated']);
+Route::get('/survey-details/{survey_id}', [SurveyDetailController::class, 'index'])->name('survey-details.index');
 
-Route::get('/survey-details', [SurveyDetailController::class, 'index'])->name('survey-details.index');
-Route::post('/survey-details', [SurveyDetailController::class, 'store']);
+// CRUD por ID del detalle de pregunta
 Route::get('/survey-details/{id}/edit', [SurveyDetailController::class, 'edit']);
 Route::put('/survey-details/{id}', [SurveyDetailController::class, 'update']);
-Route::delete('/survey-details/{id}', [SurveyDetailController::class, 'destroy']);
 
+Route::delete('/survey-details/{id}', [SurveyDetailController::class, 'destroy']);
+Route::post('/survey-details', [SurveyDetailController::class, 'store']);
+Route::post('/survey-details/bulk-delete', [SurveyDetailController::class, 'bulkDelete']);
+Route::get('/survey-details/export/{survey_id}', [SurveyDetailController::class, 'exportExcel']);
+
+
+
+
+  // Página principal con listado
+  Route::get('/selections', [SelectionController::class, 'index'])->name('selections.index');
+  Route::get('/selections/fetch', [SelectionController::class, 'fetchPaginated'])->name('selections.fetch');
+  Route::post('/selections', [SelectionController::class, 'store'])->name('selections.store');
+  Route::put('/selections/{id}', [SelectionController::class, 'update'])->name('selections.update');
+  Route::get('/selections/{id}', [SelectionController::class, 'show'])->name('selections.show');
+  Route::delete('/selections/{id}', [SelectionController::class, 'destroy'])->name('selections.destroy');
+  Route::post('/selections/bulk-delete', [SelectionController::class, 'bulkDelete'])->name('selections.bulk-delete');
+  Route::get('/selections/export/excel', [SelectionController::class, 'exportExcel'])->name('selections.export');
+
+Route::prefix('selection-details')->middleware(['auth'])->group(function () {
+    Route::get('/{selection_id}', [SelectionDetailController::class, 'index'])->name('selection-details.index');
+    Route::get('/fetch', [SelectionDetailController::class, 'fetchPaginated'])->name('selection-details.fetch');
+    Route::post('/', [SelectionDetailController::class, 'store']);
+    Route::put('/{id}', [SelectionDetailController::class, 'update']);
+    Route::get('/{id}', [SelectionDetailController::class, 'show']);
+    Route::delete('/{id}', [SelectionDetailController::class, 'destroy']);
+    Route::post('/bulk-delete', [SelectionDetailController::class, 'bulkDelete']);
+    Route::get('/export/excel/{selection_id}', [SelectionDetailController::class, 'exportExcel']);
+});
 
 });
 

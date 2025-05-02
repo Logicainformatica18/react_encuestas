@@ -8,38 +8,51 @@ return new class extends Migration
 {
     public function up(): void
     {
+
+
+
+
         Schema::create('survey_details', function (Blueprint $table) {
             $table->id();
 
-            // Relaciones
             $table->unsignedBigInteger('survey_id');
-            $table->foreign('survey_id')->references('id')->on('surveys');
+            $table->string('question');
+            $table->text('detail')->nullable();
+            $table->text('detail_2')->nullable(); // ➕ nuevo
+            $table->text('detail_3')->nullable(); // ➕ nuevo
+            $table->string('correct')->nullable(); // ➕ nuevo
+            $table->decimal('point', 5, 2)->nullable(); // ➕ nuevo (puedes ajustar la precisión)
 
-            $table->unsignedBigInteger('selection_id')->nullable();
-            $table->foreign('selection_id')->references('id')->on('selections');
-
-            // Datos de la pregunta
-            $table->string('front_page')->nullable();
-            $table->string('image')->nullable();
-            $table->string('post')->nullable();
-            $table->longText('question');
             $table->string('type');
-            $table->json('option')->nullable();
-            $table->string('requerid')->nullable();
+            $table->text('option')->nullable();
             $table->string('state')->nullable();
+            $table->string('requerid')->default('Sí');
+            $table->string('title')->nullable();
+            $table->string('evaluate')->nullable();
+            $table->unsignedBigInteger('selection_id')->nullable();
 
-            // Extras encontrados en otras migraciones
-            $table->string('initialize')->default('not');
-            $table->string('category')->default('all');
-            $table->integer('enumeration')->default(0);
-            $table->string('visible')->default('yes');
+            $table->string('visible')->default('1');
+
+            $table->string('enumeration')->nullable();
+            $table->string('initialize')->nullable();
+            $table->string('category')->nullable();
 
             $table->timestamps();
-        });
-    }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('survey_details');
-    }
+            $table->foreign('survey_id')->references('id')->on('surveys')->onDelete('cascade');
+            $table->foreign('selection_id')->references('id')->on('selections')->nullOnDelete();
+        });
+
+
+
+            }
+
+            public function down()
+            {
+                Schema::dropIfExists('survey_details');
+
+
+            }
+
+
 };
