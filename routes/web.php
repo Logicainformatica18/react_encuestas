@@ -3,6 +3,7 @@
     use App\Http\Controllers\UserController;
     use App\Http\Controllers\ProductController;
     use App\Http\Controllers\SurveyController;
+    use App\Http\Controllers\SurveyDetailController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ArticleController;
@@ -94,6 +95,15 @@ Route::delete('/surveys/{id}', [SurveyController::class, 'destroy']);
 Route::post('/surveys/{id}', [SurveyController::class, 'update']); // Puedes usar PUT si tu controlador lo soporta
 Route::get('/surveys/{id}', [SurveyController::class, 'show']);
 Route::post('/surveys/bulk-delete', [SurveyController::class, 'bulkDelete']);
+
+
+Route::get('/surveys/{survey}/details', [SurveyDetailController::class, 'details'])->name('surveys.details');
+
+Route::get('/survey-details', [SurveyDetailController::class, 'index'])->name('survey-details.index');
+Route::post('/survey-details', [SurveyDetailController::class, 'store']);
+Route::get('/survey-details/{id}/edit', [SurveyDetailController::class, 'edit']);
+Route::put('/survey-details/{id}', [SurveyDetailController::class, 'update']);
+Route::delete('/survey-details/{id}', [SurveyDetailController::class, 'destroy']);
 
 
 });
