@@ -1,10 +1,11 @@
 import AppLayout from '@/layouts/app-layout';
 import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { Paintbrush, Trash2, ListPlus } from 'lucide-react';
+import { Paintbrush, Trash2 } from 'lucide-react';
 import axios from 'axios';
-import SelectionModal from './modal';
 import { toast } from 'sonner';
+import SelectionModal from './modal';
+import SelectionDetailModal from '../SelectionDetails/modal'; // Modal de detalles
 
 interface Selection {
   id: number;
@@ -13,6 +14,12 @@ interface Selection {
   associate_id?: number;
   associate?: { description: string } | null;
   state?: string;
+}
+
+interface SelectionDetail {
+  id: number;
+  description: string;
+  detail?: string;
 }
 
 interface Pagination<T> {
@@ -34,6 +41,10 @@ export default function Selections() {
   const [showModal, setShowModal] = useState(false);
   const [editSelection, setEditSelection] = useState<Selection | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [currentSelection, setCurrentSelection] = useState<Selection | null>(null);
+  const [selectionDetails, setSelectionDetails] = useState<SelectionDetail[]>([]);
 
   const fetchSelection = async (id: number) => {
     try {
@@ -88,6 +99,18 @@ export default function Selections() {
         toast.error('❌ Error al eliminar');
         console.error(e);
       }
+    }
+  };
+
+  const openDetailModal = async (selection: Selection) => {
+    try {
+      const res = await axios.get(`/selection-details/by-selection/${selection.id}`);
+      setCurrentSelection(selection);
+      setSelectionDetails(res.data.details);
+      setShowDetailModal(true);
+    } catch (error) {
+      toast.error('❌ Error al obtener detalles');
+      console.error(error);
     }
   };
 
@@ -165,7 +188,7 @@ export default function Selections() {
                       <Paintbrush className="w-4 h-4 inline" />
                     </button>
                     <button
-                      onClick={() => toast.info('🔧 Abrir listas (pendiente)')}
+                      onClick={() => openDetailModal(d)}
                       className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
                     >
                       Listas
@@ -214,6 +237,21 @@ export default function Selections() {
           onSaved={handleSaved}
           selectionToEdit={editSelection}
           associates={associates}
+        />
+      )}
+
+      {showDetailModal && currentSelection && (
+        <SelectionDetailModal
+          open={showDetailModal}
+          onClose={() => {
+            setShowDetailModal(false);
+            setCurrentSelection(null);
+          }}
+          selection={currentSelection}
+          details={selectionDetails}
+          onDeleted={(id) => {
+            setSelectionDetails((prev) => prev.filter((d) => d.id !== id));
+          }}
         />
       )}
     </AppLayout>

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class SurveyDetail extends Model
 {
+  
+    
     use HasFactory;
         public function survey()
     {

@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class SelectionDetail extends Model
 {
+    protected $fillable = [
+        'description',
+        'detail',
+        'selection_id',
+        'associate_detail_id',
+    ];
     use HasFactory;
                 public function selection()
     {

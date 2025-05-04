@@ -127,16 +127,22 @@ Route::get('/survey-details/export/{survey_id}', [SurveyDetailController::class,
   Route::post('/selections/bulk-delete', [SelectionController::class, 'bulkDelete'])->name('selections.bulk-delete');
   Route::get('/selections/export/excel', [SelectionController::class, 'exportExcel'])->name('selections.export');
 
-Route::prefix('selection-details')->middleware(['auth'])->group(function () {
-    Route::get('/{selection_id}', [SelectionDetailController::class, 'index'])->name('selection-details.index');
-    Route::get('/fetch', [SelectionDetailController::class, 'fetchPaginated'])->name('selection-details.fetch');
-    Route::post('/', [SelectionDetailController::class, 'store']);
-    Route::put('/{id}', [SelectionDetailController::class, 'update']);
-    Route::get('/{id}', [SelectionDetailController::class, 'show']);
-    Route::delete('/{id}', [SelectionDetailController::class, 'destroy']);
-    Route::post('/bulk-delete', [SelectionDetailController::class, 'bulkDelete']);
-    Route::get('/export/excel/{selection_id}', [SelectionDetailController::class, 'exportExcel']);
-});
+ // Route::get('/selection-details/by-selection/{selectionId}', [SelectionDetailController::class, 'getBySelection']);
+  Route::get('/selection-details/by-selection/{id}', [SelectionDetailController::class, 'bySelection']);
+  Route::post('/selection-details', [SelectionDetailController::class, 'store']);
+  Route::delete('/selection-details/{id}', [SelectionDetailController::class, 'destroy']);
+
+
+// Route::prefix('selection-details')->middleware(['auth'])->group(function () {
+//     Route::get('/{selection_id}', [SelectionDetailController::class, 'index'])->name('selection-details.index');
+//     Route::get('/fetch', [SelectionDetailController::class, 'fetchPaginated'])->name('selection-details.fetch');
+//     Route::post('/', [SelectionDetailController::class, 'store']);
+//     Route::put('/{id}', [SelectionDetailController::class, 'update']);
+//     Route::get('/{id}', [SelectionDetailController::class, 'show']);
+//     Route::delete('/{id}', [SelectionDetailController::class, 'destroy']);
+//     Route::post('/bulk-delete', [SelectionDetailController::class, 'bulkDelete']);
+//     Route::get('/export/excel/{selection_id}', [SelectionDetailController::class, 'exportExcel']);
+//});
 
 });
 

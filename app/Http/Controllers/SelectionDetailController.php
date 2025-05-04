@@ -12,19 +12,25 @@ use App\Exports\SelectionDetailsExport;
 
 class SelectionDetailController extends Controller
 {
-    public function index($selection_id)
+    public function getBySelection($selectionId)
     {
-        $selection = Selection::findOrFail($selection_id);
-
-        $selectionDetails = SelectionDetail::where('selection_id', $selection_id)
-            ->orderBy('id', 'desc')
-            ->paginate(10);
-
-        return Inertia::render('selection-details/index', [
-            'selectionDetails' => $selectionDetails,
-            'selection' => $selection,
+        $details = SelectionDetail::where('selection_id', $selectionId)->get();
+    
+        return response()->json([
+            'details' => $details
         ]);
     }
+    public function bySelection($id)
+{
+    $details = SelectionDetail::where('selection_id', $id)
+        ->orderBy('id', 'asc')
+        ->paginate(7); // Paginación de 7 en 7
+
+    return response()->json($details);
+}
+
+
+  
 
     public function fetchPaginated(Request $request)
     {
@@ -41,24 +47,21 @@ class SelectionDetailController extends Controller
     {
         $request->validate([
             'description' => 'required|string|max:255',
-            'detail' => 'nullable|string',
-            'selection_id' => 'required|exists:selections,id',
-            'associate_detail_id' => 'nullable|integer',
+            'primary' => 'required|exists:selections,id',
         ]);
-
-        $selectionDetail = SelectionDetail::create($request->only(
-            'description', 'detail', 'selection_id', 'associate_detail_id'
-        ));
-
-        return response()->json([
-            'message' => '✅ Detalle creado correctamente',
-            'selectionDetail' => $selectionDetail,
+    
+        $detail = SelectionDetail::create([
+            'description' => $request->description,
+            'selection_id' => $request->primary,
         ]);
+    
+        return response()->json(['message' => '✅ Detalle agregado', 'detail' => $detail]);
     }
+    
 
     public function update(Request $request, $id)
     {
-        $request->validate([
+         $request->validate([
             'description' => 'required|string|max:255',
             'detail' => 'nullable|string',
             'associate_detail_id' => 'nullable|integer',
