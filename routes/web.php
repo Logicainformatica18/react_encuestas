@@ -7,7 +7,7 @@
     use App\Http\Controllers\SelectionController;
 use App\Http\Controllers\SelectionDetailController;
 use App\Http\Controllers\SurveyClientController;
- 
+
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -135,19 +135,13 @@ Route::get('/survey-details/export/{survey_id}', [SurveyDetailController::class,
   Route::delete('/selection-details/{id}', [SelectionDetailController::class, 'destroy']);
 
 
-// Route::prefix('selection-details')->middleware(['auth'])->group(function () {
-//     Route::get('/{selection_id}', [SelectionDetailController::class, 'index'])->name('selection-details.index');
-//     Route::get('/fetch', [SelectionDetailController::class, 'fetchPaginated'])->name('selection-details.fetch');
-//     Route::post('/', [SelectionDetailController::class, 'store']);
-//     Route::put('/{id}', [SelectionDetailController::class, 'update']);
-//     Route::get('/{id}', [SelectionDetailController::class, 'show']);
-//     Route::delete('/{id}', [SelectionDetailController::class, 'destroy']);
-//     Route::post('/bulk-delete', [SelectionDetailController::class, 'bulkDelete']);
-//     Route::get('/export/excel/{selection_id}', [SelectionDetailController::class, 'exportExcel']);
-//});
+
 
 });
 
+use App\Http\Controllers\ContractGeneratorController;
+
+Route::post('/generate-document', [ContractGeneratorController::class, 'generate']);
 
 
 // Ruta pública para mostrar la portada de la encuesta

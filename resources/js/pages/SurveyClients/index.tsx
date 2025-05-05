@@ -40,6 +40,7 @@ export default function SurveyClientIndex() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [invalidFields, setInvalidFields] = useState<number[]>([]);
+  const [documentGenerated, setDocumentGenerated] = useState(false);
 
   useEffect(() => {
     if (!clientId) {
@@ -100,6 +101,20 @@ export default function SurveyClientIndex() {
     window.location.href = '/gracias';
   };
 
+  const handleGenerateDocument = async () => {
+    try {
+      const response = await axios.post('/generate-document', {
+        client_id: clientId,
+        answers,
+      });
+      toast.success('✅ Documento generado correctamente');
+      setDocumentGenerated(true);
+      window.open(response.data.download_url, '_blank');
+    } catch (e) {
+      toast.error('❌ Error al generar el documento');
+    }
+  };
+
   if (!survey || !survey_details || survey_details.length === 0) {
     return <div className="text-center py-10">Cargando encuesta...</div>;
   }
@@ -110,60 +125,93 @@ export default function SurveyClientIndex() {
       <p className="text-center text-gray-600">{survey.description}</p>
       <p className="text-center text-sm text-red-600 mt-2">(*) Campos obligatorios</p>
 
-      {survey_details.map((q, index) => (
-        <div key={q.id} className="border-b pb-6">
-          <h3 className="text-lg font-semibold mb-1">{q.title}</h3>
-          <p className="text-sm text-gray-600 mb-1">{q.detail}</p>
-          <p className="text-md font-medium mb-2">
-            {index + 1}. {q.question}{q.requerid === 'yes' && <span className="text-red-600"> *</span>}
-          </p>
+      {survey_details.map((q, index) => {
+        const isFileQuestion = q.type === 'file';
+        if (isFileQuestion && !documentGenerated) return null;
 
-          {q.type === 'short_answer' && (
-            <input
-              name={String(q.id)}
-              value={answers[q.id] || ''}
-              onChange={handleChange}
-              className={`w-full border px-3 py-2 rounded ${invalidFields.includes(q.id) ? 'border-red-500' : ''}`}
-            />
-          )}
+        return (
+          <div key={q.id} className="border-b pb-6">
+            <h3 className="text-lg font-semibold mb-1">{q.title}</h3>
+            <p className="text-sm text-gray-600 mb-1">{q.detail}</p>
+            <p className="text-md font-medium mb-2">
+              {index + 1}. {q.question}{q.requerid === 'yes' && <span className="text-red-600"> *</span>}
+            </p>
 
-          {q.type === 'multiple_option' &&
-            Array.isArray(JSON.parse(q.option || '[]')) &&
-            JSON.parse(q.option || '[]').map((opt: string, i: number) => (
-              <label key={i} className="block">
-                <input
-                  type="radio"
-                  name={String(q.id)}
-                  value={opt}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                {opt}
-              </label>
-            ))}
+            {q.type === 'short_answer' && (
+              <input
+                name={String(q.id)}
+                value={answers[q.id] || ''}
+                onChange={handleChange}
+                className={`w-full border px-3 py-2 rounded ${invalidFields.includes(q.id) ? 'border-red-500' : ''}`}
+              />
+            )}
 
-          {q.type === 'selection' && q.selection && (
-            <select
-              name={String(q.id)}
-              value={answers[q.id] || ''}
-              onChange={handleChange}
-              className={`w-full border px-2 py-1 rounded ${invalidFields.includes(q.id) ? 'border-red-500' : ''}`}
-            >
-              <option value="">-- Seleccione --</option>
-              {q.selection.selection_detail.map((opt) => (
-                <option key={opt.id} value={opt.id}>{opt.description}</option>
+            {q.type === 'multiple_option' &&
+              Array.isArray(JSON.parse(q.option || '[]')) &&
+              JSON.parse(q.option || '[]').map((opt: string, i: number) => (
+                <label key={i} className="block">
+                  <input
+                    type="radio"
+                    name={String(q.id)}
+                    value={opt}
+                    onChange={handleChange}
+                    className="mr-2"
+                  />
+                  {opt}
+                </label>
               ))}
-            </select>
-          )}
-        </div>
-      ))}
 
-      <div className="text-center pt-8">
+            {q.type === 'selection' && q.selection && (
+              <select
+                name={String(q.id)}
+                value={answers[q.id] || ''}
+                onChange={handleChange}
+                className={`w-full border px-2 py-1 rounded ${invalidFields.includes(q.id) ? 'border-red-500' : ''}`}
+              >
+                <option value="">-- Seleccione --</option>
+                {q.selection.selection_detail.map((opt) => (
+                  <option key={opt.id} value={opt.id}>{opt.description}</option>
+                ))}
+              </select>
+            )}
+
+{q.type === 'file' && (
+  <div className={`p-4 mt-2 border-2 rounded bg-green-100 border-green-500 animate-pulse`}>
+    <label className="block font-semibold text-green-900 mb-1">
+      📎 Adjunta el documento generado
+    </label>
+    <input
+      type="file"
+      name={String(q.id)}
+      onChange={(e) =>
+        setAnswers((prev) => ({ ...prev, [q.id]: e.target.files?.[0] }))
+      }
+      className="block w-full"
+    />
+  </div>
+)}
+
+          </div>
+        );
+      })}
+
+      <div className="text-center mt-6 space-x-4">
+        <Button onClick={handleGenerateDocument} disabled={loading}>
+          Generar documento
+        </Button>
+<br />
         <Button
-          onClick={handleMassSubmit}
-          disabled={loading}
-          className="relative"
-        >
+  onClick={handleMassSubmit}
+  disabled={loading || !documentGenerated}
+  className="relative mt-2"
+>
+{!documentGenerated && (
+  <p className="mt-3 text-sm px-4 py-2 bg-yellow-100 text-yellow-800 border border-yellow-400 rounded">
+    ⚠️ Debe generar el documento antes de poder enviar el formulario.
+  </p>
+)}
+
+
           {loading ? (
             <span className="flex items-center justify-center">
               <Loader2 className="animate-spin mr-2" /> Enviando... {progress}%
@@ -172,15 +220,16 @@ export default function SurveyClientIndex() {
             'Enviar formulario'
           )}
         </Button>
-        {loading && (
-          <div className="w-full h-2 bg-gray-200 mt-4 rounded">
-            <div
-              className="h-full bg-green-500 rounded"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-        )}
       </div>
+
+      {loading && (
+        <div className="w-full h-2 bg-gray-200 mt-4 rounded">
+          <div
+            className="h-full bg-green-500 rounded"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+      )}
     </div>
   );
 }
