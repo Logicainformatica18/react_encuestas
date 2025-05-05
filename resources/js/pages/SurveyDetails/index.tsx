@@ -40,7 +40,8 @@ export default function SurveyDetails() {
 
   const fetchDetail = async (id: number) => {
     const res = await axios.get(`/survey-details/${id}/edit`);
-    setEditDetail(res.data);
+    setEditDetail(res.data.survey_detail); // ✅
+
     setShowModal(true);
   };
 

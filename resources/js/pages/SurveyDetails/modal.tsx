@@ -90,7 +90,7 @@ import {
           let response;
           if (detailToEdit) {
             response = await axios.put(`/survey-details/${detailToEdit.id}`, payload);
-            toast.success('Pregunta actualizada ✅');
+          //  toast.success('Pregunta actualizada ✅');
           } else {
             response = await axios.post('/survey-details', payload);
             toast.success('Pregunta registrada ✅');
