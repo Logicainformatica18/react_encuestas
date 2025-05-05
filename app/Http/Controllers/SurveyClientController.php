@@ -47,7 +47,15 @@ public function index(Request $request, $slug)
     $survey_details = SurveyDetail::where('survey_id', $survey->id)
         ->where('visible', '1')
         ->orderBy('created_at', 'asc')
-        ->get();
+        ->get()
+        ->map(function ($detail) {
+            return [
+                ...$detail->toArray(),
+                'file_1' => $detail->file_1
+                    ? asset('survey_files/' . $detail->file_1)
+                    : null,
+            ];
+        });
 
     return Inertia::render('SurveyClients/index', [
         'survey' => [
@@ -55,13 +63,14 @@ public function index(Request $request, $slug)
             'title' => $survey->title,
             'description' => $survey->description,
             'state' => $survey->state,
-            'slug' => $slug, // 👈 Esto es lo importante
+            'slug' => $slug,
         ],
         'survey_details' => $survey_details,
         'survey_count' => $survey_details->count(),
         'client_id' => session('client_id'),
     ]);
 }
+
 
 
     public function store(Request $request)

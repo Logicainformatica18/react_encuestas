@@ -193,21 +193,38 @@ export default function SurveyClientIndex() {
               </select>
             )}
 
-            {q.type === 'file' && (
-              <div className={`p-4 mt-2 border-2 rounded bg-green-100 border-green-500 animate-pulse`}>
-                <label className="block font-semibold text-green-900 mb-1">
-                  📎 Adjunta el documento generado
-                </label>
-                <input
-                  type="file"
-                  name={String(q.id)}
-                  onChange={(e) =>
-                    setAnswers((prev) => ({ ...prev, [q.id]: e.target.files?.[0] }))
-                  }
-                  className="block w-full"
-                />
-              </div>
-            )}
+{q.type === 'file' && (
+  <div className="mt-2">
+    {q.file_1 && (
+      <div className="mb-2">
+        <p className="text-sm text-gray-700 mb-1">Descargue el documento</p>
+        <a
+          href={q.file_1}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          📎 Descargar archivo generado
+        </a>
+      </div>
+    )}
+
+    <div className="p-4 border-2 rounded bg-green-100 border-green-500">
+      <label className="block font-semibold text-green-900 mb-1">
+        📎 Adjunta el documento generado
+      </label>
+      <input
+        type="file"
+        name={String(q.id)}
+        onChange={(e) =>
+          setAnswers((prev) => ({ ...prev, [q.id]: e.target.files?.[0] }))
+        }
+        className="block w-full"
+      />
+    </div>
+  </div>
+)}
+
           </div>
         );
       })}

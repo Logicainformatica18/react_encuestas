@@ -7,8 +7,28 @@ use Illuminate\Database\Eloquent\Model;
 
 class SurveyDetail extends Model
 {
-  
-    
+
+    protected $fillable = [
+        'survey_id',
+        'question',
+        'detail',
+        'detail_2',
+        'detail_3',
+        'correct',
+        'evaluate',
+        'requerid',
+        'point',
+        'title',
+        'category',
+        'enumeration',
+        'visible',
+        'initialize',
+        'type',
+        'option',
+        'selection_id',
+        'file_1',
+    ];
+
     use HasFactory;
         public function survey()
     {

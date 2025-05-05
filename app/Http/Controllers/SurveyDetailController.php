@@ -19,19 +19,19 @@ class SurveyDetailController extends Controller
     {
         $survey = Survey::findOrFail($survey_id);
         $selections = Selection::orderBy('created_at')->get();
-    
+
         $survey_details = SurveyDetail::where('survey_id', $survey_id)
             ->where('visible', '1')
             ->orderBy('created_at', 'desc')
             ->paginate(10); // 👈 CAMBIO CLAVE
-    
+
         return Inertia::render('SurveyDetails/index', [
             'surveyDetails' => $survey_details,
             'survey' => $survey,
             'selections' => $selections,
         ]);
     }
-    
+
 
     public function store(Request $request)
     {
@@ -54,6 +54,7 @@ class SurveyDetailController extends Controller
                 'category' => 'nullable|string',
                 'enumeration' => 'nullable|string',
                 'visible' => 'nullable|string|max:5',
+                'file_1' => 'nullable|file|max:10240', // hasta 10MB
             ]);
 
             $options = array_filter($request->input('options', []), fn($opt) => !empty($opt));
@@ -78,6 +79,13 @@ class SurveyDetailController extends Controller
             $survey_detail->initialize = 'not';
             $survey_detail->visible = $request->visible ?? '1';
 
+            if ($request->hasFile('file_1')) {
+                $file = $request->file('file_1');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('survey_files'), $filename);
+                $survey_detail->file_1 = $filename;
+            }
+
             $survey_detail->save();
 
             return response()->json([
@@ -94,6 +102,7 @@ class SurveyDetailController extends Controller
         }
     }
 
+
     public function edit($id)
     {
         $survey_detail = SurveyDetail::findOrFail($id);
@@ -102,60 +111,83 @@ class SurveyDetailController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        $survey_detail = SurveyDetail::findOrFail($id);
-    
-        $request->validate([
-            'question' => 'required|string|max:255',
-            'detail' => 'nullable|string',
-            'detail_2' => 'nullable|string',
-            'detail_3' => 'nullable|string',
-            'correct' => 'nullable|string',
-            'evaluate' => 'nullable|string',
-            'requerid' => 'nullable|string|max:10',
-            'point' => 'nullable|numeric',
-            'title' => 'nullable|string|max:255',
-            'category' => 'nullable|string|max:100',
-            'enumeration' => 'nullable|string|max:20',
-            'visible' => 'nullable|string|max:5',
-            'type' => 'required|string|max:50',
-            'option' => 'nullable|array',
-            'selection_id' => 'nullable|exists:selections,id',
-        ]);
-    
-        $survey_detail->question = Str::upper($request->question);
-        $survey_detail->detail = $request->detail;
-        $survey_detail->detail_2 = $request->detail_2;
-        $survey_detail->detail_3 = $request->detail_3;
-        $survey_detail->correct = $request->correct;
-        $survey_detail->evaluate = $request->evaluate;
-        $survey_detail->requerid = $request->requerid ?? 'Sí';
-        $survey_detail->point = $request->point;
-        $survey_detail->title = $request->title;
-        $survey_detail->category = $request->category;
-        $survey_detail->enumeration = $request->enumeration;
-        $survey_detail->visible = $request->visible ?? '1';
-        $survey_detail->type = $request->type;
-        $survey_detail->selection_id = $request->selection_id;
-        $survey_detail->option = $request->type === 'multiple_option'
+{
+    $survey_detail = SurveyDetail::findOrFail($id);
+
+    $request->validate([
+        'question' => 'required|string|max:255',
+        'detail' => 'nullable|string',
+        'detail_2' => 'nullable|string',
+        'detail_3' => 'nullable|string',
+        'correct' => 'nullable|string',
+        'evaluate' => 'nullable|string',
+        'requerid' => 'nullable|string|max:10',
+        'point' => 'nullable|numeric',
+        'title' => 'nullable|string|max:255',
+        'category' => 'nullable|string|max:100',
+        'enumeration' => 'nullable|string|max:20',
+        'visible' => 'nullable|string|max:5',
+        'type' => 'required|string|max:50',
+        'option' => 'nullable|array',
+        'selection_id' => 'nullable|exists:selections,id',
+        'file_1' => 'nullable|file|max:10240', // hasta 10MB
+    ]);
+
+    $survey_detail->question = Str::upper($request->question);
+    $survey_detail->detail = $request->detail;
+    $survey_detail->detail_2 = $request->detail_2;
+    $survey_detail->detail_3 = $request->detail_3;
+    $survey_detail->correct = $request->correct;
+    $survey_detail->evaluate = $request->evaluate;
+    $survey_detail->requerid = $request->requerid ?? 'Sí';
+    $survey_detail->point = $request->point;
+    $survey_detail->title = $request->title;
+    $survey_detail->category = $request->category;
+    $survey_detail->enumeration = $request->enumeration;
+    $survey_detail->visible = $request->visible ?? '1';
+    $survey_detail->type = $request->type;
+    $survey_detail->selection_id = $request->selection_id;
+    $survey_detail->option = $request->type === 'multiple_option'
         ? json_encode($request->option ?? [])
         : json_encode([]);
-    
-    
-        $survey_detail->save();
-    
-        return response()->json([
-            'message' => '✅ Pregunta actualizada correctamente.',
-            'survey_detail' => $survey_detail,
-        ]);
+
+    // ✅ Eliminar archivo anterior si existe y se sube uno nuevo
+    if ($request->hasFile('file_1')) {
+        if ($survey_detail->file_1 && file_exists(public_path('survey_files/' . $survey_detail->file_1))) {
+            unlink(public_path('survey_files/' . $survey_detail->file_1));
+        }
+
+        $file = $request->file('file_1');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $file->move(public_path('survey_files'), $filename);
+        $survey_detail->file_1 = $filename;
     }
-    
-    
+
+    $survey_detail->save();
+
+    return response()->json([
+        'message' => '✅ Pregunta actualizada correctamente.',
+        'survey_detail' => $survey_detail,
+    ]);
+}
+
+
+
+
 
     public function destroy($id)
     {
         $detail = SurveyDetail::findOrFail($id);
-        SurveyClient::where('survey_detail_id', $id)->delete();
+
+        // Eliminar archivo si existe
+        if ($detail->file_1 && file_exists(public_path('survey_files/' . $detail->file_1))) {
+            unlink(public_path('survey_files/' . $detail->file_1));
+        }
+
+        // Eliminar respuestas asociadas
+        \App\Models\SurveyClient::where('survey_detail_id', $id)->delete();
+
+        // Eliminar la pregunta
         $detail->delete();
 
         return response()->json([
@@ -163,6 +195,7 @@ class SurveyDetailController extends Controller
             'success' => true,
         ]);
     }
+
 
     public function bulkDelete(Request $request)
     {

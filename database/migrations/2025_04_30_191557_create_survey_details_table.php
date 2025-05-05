@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('enumeration')->nullable();
             $table->string('initialize')->nullable();
             $table->string('category')->nullable();
+            $table->string('file_1')->nullable(); //
 
             $table->timestamps();
 

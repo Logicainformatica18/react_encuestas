@@ -80,5 +80,32 @@ class QuestionSeeder extends Seeder
                 'survey_id' => '1',
             ],
         ]);
+
+
+
+
+        $surveyId = 2; // 🔁 Cambiar según el ID real de la encuesta
+
+        $preguntas = [
+            ['title' => 'Nombre del socio comercial', 'campo' => 'campo1'],
+            ['title' => 'DNI del socio comercial', 'campo' => 'campo2'],
+            ['title' => 'Dirección del socio comercial', 'campo' => 'campo3'],
+            ['title' => 'Distrito del socio comercial', 'campo' => 'campo4'],
+        ];
+
+        foreach ($preguntas as $p) {
+            SurveyDetail::create([
+                'survey_id'   => $surveyId,
+                'question'    => 'Complete: ' . $p['title'],
+                'title'       => $p['campo'],
+                'type'        => 'short_answer',
+                'option'      => json_encode([]),
+                'requerid'    => 'Sí',
+                'visible'     => '1',
+                'initialize'  => 'not',
+                'enumeration' => '0',
+                'category'    => 'all',
+            ]);
+        }
     }
 }

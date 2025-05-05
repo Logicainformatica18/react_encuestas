@@ -16,6 +16,7 @@ interface SurveyDetail {
   evaluate?: string;
   requerid?: string;
   visible?: string;
+  file_1?: string;
 }
 
 interface Pagination<T> {
@@ -40,8 +41,7 @@ export default function SurveyDetails() {
 
   const fetchDetail = async (id: number) => {
     const res = await axios.get(`/survey-details/${id}/edit`);
-    setEditDetail(res.data.survey_detail); // ✅
-
+    setEditDetail(res.data.survey_detail);
     setShowModal(true);
   };
 
@@ -141,6 +141,7 @@ export default function SurveyDetails() {
                 <th className="px-4 py-2 text-black dark:text-white">Tipo</th>
                 <th className="px-4 py-2 text-black dark:text-white">Título</th>
                 <th className="px-4 py-2 text-black dark:text-white whitespace-pre-wrap break-words max-w-xs">Opciones</th>
+                <th className="px-4 py-2 text-black dark:text-white">Adjunto</th>
               </tr>
             </thead>
             <tbody>
@@ -184,6 +185,20 @@ export default function SurveyDetails() {
                         return '-';
                       }
                     })()}
+                  </td>
+                  <td className="px-4 py-2">
+                    {d.file_1 ? (
+                      <a
+                        href={`/survey_files/${d.file_1}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Descargar 📎
+                      </a>
+                    ) : (
+                      '-'
+                    )}
                   </td>
                 </tr>
               ))}
