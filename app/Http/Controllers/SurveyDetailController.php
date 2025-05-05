@@ -66,7 +66,7 @@ class SurveyDetailController extends Controller
             $survey_detail->title = $request->title;
             $survey_detail->state = $request->state;
             $survey_detail->evaluate = $request->evaluate;
-            $survey_detail->requerid = $request->requerid ?? 'Sí';
+            $survey_detail->requerid = $request->requerid ?? 'yes';
             $survey_detail->selection_id = $request->selection_id;
             $survey_detail->detail = $request->detail;
             $survey_detail->detail_2 = $request->detail_2;

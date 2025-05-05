@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Survey;
+use Illuminate\Support\Str;
 class SurveySeeder extends Seeder
 {
     /**
@@ -12,11 +13,12 @@ class SurveySeeder extends Seeder
      */
     public function run(): void
     {
+
         Survey::create([
             'title' => 'Encuesta1',
             'description' => 'Primera encuesta de prueba',
             'detail' => '',
-            'url' => '',
+            'url' => Str::slug('Encuesta1'),
             'date_start' => '2023-05-04',
             'date_end' => '2023-05-04',
             'front_page' => null,
@@ -27,12 +29,12 @@ class SurveySeeder extends Seeder
             'state' => 'activo',
             'created_by' => 1,
         ]);
-
+        
         Survey::create([
             'title' => 'Encuesta2',
             'description' => 'Segunda encuesta sobre clientes',
             'detail' => '',
-            'url' => '',
+            'url' => Str::slug('Encuesta2'),
             'date_start' => '2023-06-01',
             'date_end' => '2023-06-10',
             'front_page' => null,
@@ -43,6 +45,16 @@ class SurveySeeder extends Seeder
             'state' => 'activo',
             'created_by' => 1,
         ]);
+        
 
+
+
+
+
+
+
+
+
+        
     }
 }

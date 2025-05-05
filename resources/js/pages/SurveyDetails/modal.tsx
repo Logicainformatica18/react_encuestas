@@ -32,6 +32,9 @@ import {
       state: '',
       evaluate: '',
       requerid: '',
+        detail: '',
+        code: '',
+        selection_id: '',
       options: Array(10).fill(''),
     });
 
@@ -47,14 +50,18 @@ import {
           }
         })();
         setForm({
-          question: detailToEdit.question || '',
-          type: detailToEdit.type || '',
-          title: detailToEdit.title || '',
-          state: detailToEdit.state || '',
-          evaluate: detailToEdit.evaluate || '',
-          requerid: detailToEdit.requerid || '',
-          options: [...parsed, ...Array(10 - parsed.length).fill('')],
-        });
+            question: detailToEdit.question || '',
+            type: detailToEdit.type || '',
+            title: detailToEdit.title || '',
+            state: detailToEdit.state || '',
+            evaluate: detailToEdit.evaluate || '',
+            requerid: detailToEdit.requerid || '',
+            detail: detailToEdit.detail || '',
+            code: detailToEdit.code || '',
+            selection_id: detailToEdit.selection_id || '',
+            options: [...parsed, ...Array(10 - parsed.length).fill('')],
+          });
+          
       } else {
         setForm({
           question: '',
@@ -63,6 +70,9 @@ import {
           state: '',
           evaluate: '',
           requerid: '',
+            detail: '',
+            code: '',
+            selection_id: '',
           options: Array(10).fill(''),
         });
       }

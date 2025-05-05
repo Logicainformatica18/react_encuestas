@@ -9,6 +9,7 @@ use App\Models\Answer;
 use App\Models\Selection;
 use App\Models\SelectionDetail;
 use App\Models\User;
+
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -31,7 +32,7 @@ class DatabaseSeeder extends Seeder
 
                   $this->call(SelectionSeeder::class);
                         $this->call(SelectionDetailSeeder::class);
-                          $this->call(SurveyDetailSeeder::class);
+                          $this->call(QuestionSeeder::class);
 
     }
 }

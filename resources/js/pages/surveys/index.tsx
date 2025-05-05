@@ -134,6 +134,8 @@ export default function Surveys() {
                 <th className="px-4 py-2 text-black dark:text-white">Acciones</th>
                 <th className="px-4 py-2 text-black dark:text-white">ID</th>
                 <th className="px-4 py-2 text-black dark:text-white">Título</th>
+                <th className="px-4 py-2 text-black dark:text-white">Enlace público</th>
+
                 <th className="px-4 py-2 text-black dark:text-white">Descripción</th>
                 <th className="px-4 py-2 text-black dark:text-white">Detalle</th>
                 <th className="px-4 py-2 text-black dark:text-white">URL</th>
@@ -164,14 +166,20 @@ export default function Surveys() {
                     />
                   </td>
                   <td className="px-4 py-2 text-sm space-y-1">
-                   <button
+  <button
+    onClick={() => router.visit(`/survey-details/${s.id}`)}
+    className="block text-center w-full bg-yellow-500 text-black px-2 py-1 rounded hover:bg-yellow-600 transition"
+  >
+    Ver preguntas
+  </button>
 
+  <button
+    onClick={() => router.visit(`/reportes/${s.id}`)}
+    className="block text-center w-full bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition"
+  >
+    Ver reportes
+  </button>
 
-  onClick={() => router.visit(`/survey-details/${s.id}`)}
-  className="block text-center w-full bg-yellow-500 text-black px-2 py-1 rounded hover:bg-yellow-600 transition"
->
-  Ver preguntas
-</button>
 
                     <button
                       onClick={() => fetchSurvey(s.id)}
@@ -188,6 +196,20 @@ export default function Surveys() {
                   </td>
                   <td className="px-4 py-2">{s.id}</td>
                   <td className="px-4 py-2">{s.title}</td>
+                  <td className="px-4 py-2">
+  {s.url ? (
+    <a
+      href={`/encuesta/${s.url}`}
+      target="_blank"
+      className="text-green-600 hover:underline"
+    >
+      Ver encuesta
+    </a>
+  ) : (
+    <span className="text-gray-400 italic">Sin URL</span>
+  )}
+</td>
+
                   <td className="px-4 py-2">{s.description}</td>
                   <td className="px-4 py-2">{s.detail}</td>
                   <td className="px-4 py-2">{s.url}</td>

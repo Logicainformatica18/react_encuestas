@@ -6,6 +6,8 @@
     use App\Http\Controllers\SurveyDetailController;
     use App\Http\Controllers\SelectionController;
 use App\Http\Controllers\SelectionDetailController;
+use App\Http\Controllers\SurveyClientController;
+ 
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -148,8 +150,60 @@ Route::get('/survey-details/export/{survey_id}', [SurveyDetailController::class,
 
 
 
+// Ruta pública para mostrar la portada de la encuesta
+Route::get('/encuesta/{slug}', [SurveyClientController::class, 'publicHome']);
+Route::post('/survey-clients/start', [SurveyClientController::class, 'start']);
+
+// Ruta que retorna preguntas y detalles de la encuesta para el frontend
+Route::get('/encuesta/{slug}/preguntas', [SurveyClientController::class, 'index'])
+    ->name('surveyclient.index');
+
+
+// web.php
+// Route::get('/encuesta/{slug}/form', [SurveyClientController::class, 'index'])
+//     ->name('surveyclient.index');
+
+
+Route::post('/survey-clients', [SurveyClientController::class, 'store']);
+
+Route::get('/gracias', function () {
+    return Inertia::render('SurveyClients/Thanks');
+});
+
+
+// Ruta para crear el client (cuando inicia encuesta)
+Route::post('/encuesta/crear-cliente', [SurveyClientController::class, 'createClient'])
+    ->name('surveyclient.createClient');
+
+// Ruta para almacenar cada respuesta
+// Route::post('/encuesta/guardar-respuesta', [SurveyClientController::class, 'store'])
+//     ->name('surveyclient.store');
+
+// Mostrar select asociado dinámicamente (opcional, si usas asociados)
+Route::post('/encuesta/asociado', [SurveyClientController::class, 'associateShow'])
+    ->name('surveyclient.associateShow');
+
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+use App\Http\Controllers\ReportController;
+
+// Vista del reporte por encuesta
+Route::get('/reportes/{survey_id}', [ReportController::class, 'index'])->name('reports.index');
+
+
+// Ver detalle de un reporte (opcional)
+Route::get('/reportes/detalle/{client_id}', [ReportController::class, 'edit'])
+    ->name('reports.edit');
+
+// Actualizar reporte (ej. descripción o detalle del cliente)
+Route::put('/reportes/{id}', [ReportController::class, 'update'])
+    ->name('reports.update');
+
+// Eliminar reporte de un cliente
+Route::delete('/reportes/{client_id}', [ReportController::class, 'destroy'])
+    ->name('reports.destroy');
 
 /*
 agregar modulos products

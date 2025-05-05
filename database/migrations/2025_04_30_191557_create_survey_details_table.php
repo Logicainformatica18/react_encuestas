@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
 
             $table->unsignedBigInteger('survey_id');
-            $table->string('question');
+            $table->longText('question');
             $table->text('detail')->nullable();
             $table->text('detail_2')->nullable(); // ➕ nuevo
             $table->text('detail_3')->nullable(); // ➕ nuevo
