@@ -13,9 +13,6 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
-
-
-
 export default function SurveyModal({
   open,
   onClose,
@@ -35,6 +32,7 @@ export default function SurveyModal({
     date_start: '',
     date_end: '',
     front_page: null as File | null,
+    file_1: null as File | null, // ← Nuevo campo para plantilla Word
     visible: '1',
     email_confirmation: '0',
     password: '',
@@ -45,27 +43,35 @@ export default function SurveyModal({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [file1Name, setFile1Name] = useState<string | null>(null);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const file1InputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (surveyToEdit) {
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         title: surveyToEdit.title || '',
         description: surveyToEdit.description || '',
         detail: surveyToEdit.detail || '',
         url: surveyToEdit.url || '',
         date_start: surveyToEdit.date_start || '',
         date_end: surveyToEdit.date_end || '',
-        front_page: null,
         visible: surveyToEdit.visible ?? '1',
         email_confirmation: surveyToEdit.email_confirmation ?? '0',
         password: surveyToEdit.password || '',
         type: surveyToEdit.type || '',
         state: surveyToEdit.state || '',
-      });
+        front_page: null,
+        file_1: null,
+      }));
+
       setPreviewUrl(surveyToEdit.front_page ? `/imageusers/${surveyToEdit.front_page}` : null);
+      setFile1Name(surveyToEdit.file_1 ? surveyToEdit.file_1.split('/').pop() : null);
+
       if (fileInputRef.current) fileInputRef.current.value = '';
+      if (file1InputRef.current) file1InputRef.current.value = '';
     } else {
       setFormData({
         title: '',
@@ -75,6 +81,7 @@ export default function SurveyModal({
         date_start: '',
         date_end: '',
         front_page: null,
+        file_1: null,
         visible: '1',
         email_confirmation: '0',
         password: '',
@@ -82,6 +89,7 @@ export default function SurveyModal({
         state: '',
       });
       setPreviewUrl(null);
+      setFile1Name(null);
     }
   }, [surveyToEdit]);
 
@@ -93,12 +101,13 @@ export default function SurveyModal({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     setFormData((prev) => ({ ...prev, front_page: file }));
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    } else {
-      setPreviewUrl(null);
-    }
+    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+  };
+
+  const handleFile1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setFormData((prev) => ({ ...prev, file_1: file }));
+    setFile1Name(file ? file.name : null);
   };
 
   const handleSubmit = async () => {
@@ -129,7 +138,7 @@ export default function SurveyModal({
         },
       });
 
-      onSaved(); // La alerta se manejará en el index.tsx
+      onSaved();
       onClose();
 
     } catch (err) {
@@ -161,44 +170,37 @@ export default function SurveyModal({
           {[{ name: 'title', label: 'Título' }, { name: 'description', label: 'Descripción' }, { name: 'detail', label: 'Detalle' }, { name: 'url', label: 'URL' }].map(({ name, label }) => (
             <div className="grid grid-cols-4 items-center gap-4" key={name}>
               <Label className="text-right">{label}</Label>
-              <Input
-                className="col-span-3"
-                name={name}
-                value={(formData as any)[name]}
-                onChange={handleChange}
-              />
+              <Input className="col-span-3" name={name} value={(formData as any)[name]} onChange={handleChange} />
             </div>
           ))}
 
           {[{ name: 'date_start', label: 'Fecha de Inicio' }, { name: 'date_end', label: 'Fecha de Fin' }].map(({ name, label }) => (
             <div className="grid grid-cols-4 items-center gap-4" key={name}>
               <Label className="text-right">{label}</Label>
-              <Input
-                className="col-span-3"
-                name={name}
-                type="date"
-                value={(formData as any)[name]}
-                onChange={handleChange}
-              />
+              <Input className="col-span-3" name={name} type="date" value={(formData as any)[name]} onChange={handleChange} />
             </div>
           ))}
 
+          {/* Portada */}
           <div className="grid grid-cols-4 items-start gap-4">
             <Label className="text-right mt-2">Portada</Label>
             <div className="col-span-3">
-              <Input
-                type="file"
-                onChange={handleFileChange}
-                ref={fileInputRef}
-              />
+              <Input type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} />
               {previewUrl && (
                 <div className="mt-2">
-                  <img
-                    src={previewUrl}
-                    alt="Vista previa"
-                    className="w-24 h-24 object-cover rounded border"
-                  />
+                  <img src={previewUrl} alt="Vista previa" className="w-24 h-24 object-cover rounded border" />
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Plantilla Word */}
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label className="text-right mt-2">Plantilla Word</Label>
+            <div className="col-span-3">
+              <Input type="file" accept=".doc,.docx" onChange={handleFile1Change} ref={file1InputRef} />
+              {file1Name && (
+                <div className="mt-2 text-sm text-gray-700">{file1Name}</div>
               )}
             </div>
           </div>

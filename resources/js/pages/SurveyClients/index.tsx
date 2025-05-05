@@ -26,6 +26,7 @@ interface Survey {
   title: string;
   description: string;
   state: string;
+  slug: string;
 }
 
 export default function SurveyClientIndex() {
@@ -56,7 +57,8 @@ export default function SurveyClientIndex() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setAnswers((prev) => ({ ...prev, [name]: value }));
+    const processedValue = typeof value === 'string' ? value.toUpperCase() : value;
+    setAnswers((prev) => ({ ...prev, [name]: processedValue }));
     setInvalidFields((prev) => prev.filter(id => String(id) !== name));
   };
 
@@ -84,11 +86,26 @@ export default function SurveyClientIndex() {
 
     for (const q of survey_details) {
       try {
-        await axios.post('/survey-clients', {
-          survey_detail_id: q.id,
-          client_id: clientId,
-          answer: answers[q.id] || '',
+        const form = new FormData();
+        form.append('survey_detail_id', String(q.id));
+        form.append('client_id', String(clientId));
+
+        if (q.type === 'file') {
+          const file = answers[q.id];
+          if (file instanceof File) {
+            form.append('answer', file);
+          } else {
+            continue;
+          }
+        } else {
+          const value = answers[q.id] || '';
+          form.append('answer', typeof value === 'string' ? value.toUpperCase() : value);
+        }
+
+        await axios.post('/survey-clients', form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
+
         completed++;
         setProgress(Math.round((completed / total) * 100));
       } catch (e) {
@@ -98,13 +115,14 @@ export default function SurveyClientIndex() {
 
     setLoading(false);
     toast.success('✅ Encuesta finalizada');
-    window.location.href = '/gracias';
+    window.location.href = `/gracias?slug=${survey.slug}`;
   };
 
   const handleGenerateDocument = async () => {
     try {
       const response = await axios.post('/generate-document', {
         client_id: clientId,
+        survey_id: survey.id,
         answers,
       });
       toast.success('✅ Documento generado correctamente');
@@ -175,22 +193,21 @@ export default function SurveyClientIndex() {
               </select>
             )}
 
-{q.type === 'file' && (
-  <div className={`p-4 mt-2 border-2 rounded bg-green-100 border-green-500 animate-pulse`}>
-    <label className="block font-semibold text-green-900 mb-1">
-      📎 Adjunta el documento generado
-    </label>
-    <input
-      type="file"
-      name={String(q.id)}
-      onChange={(e) =>
-        setAnswers((prev) => ({ ...prev, [q.id]: e.target.files?.[0] }))
-      }
-      className="block w-full"
-    />
-  </div>
-)}
-
+            {q.type === 'file' && (
+              <div className={`p-4 mt-2 border-2 rounded bg-green-100 border-green-500 animate-pulse`}>
+                <label className="block font-semibold text-green-900 mb-1">
+                  📎 Adjunta el documento generado
+                </label>
+                <input
+                  type="file"
+                  name={String(q.id)}
+                  onChange={(e) =>
+                    setAnswers((prev) => ({ ...prev, [q.id]: e.target.files?.[0] }))
+                  }
+                  className="block w-full"
+                />
+              </div>
+            )}
           </div>
         );
       })}
@@ -199,19 +216,17 @@ export default function SurveyClientIndex() {
         <Button onClick={handleGenerateDocument} disabled={loading}>
           Generar documento
         </Button>
-<br />
+        <br />
         <Button
-  onClick={handleMassSubmit}
-  disabled={loading || !documentGenerated}
-  className="relative mt-2"
->
-{!documentGenerated && (
-  <p className="mt-3 text-sm px-4 py-2 bg-yellow-100 text-yellow-800 border border-yellow-400 rounded">
-    ⚠️ Debe generar el documento antes de poder enviar el formulario.
-  </p>
-)}
-
-
+          onClick={handleMassSubmit}
+          disabled={loading || !documentGenerated}
+          className="relative mt-2"
+        >
+          {!documentGenerated && (
+            <p className="mt-3 text-sm px-4 py-2 bg-yellow-100 text-yellow-800 border border-yellow-400 rounded">
+              ⚠️ Debe generar el documento antes de poder enviar el formulario.
+            </p>
+          )}
           {loading ? (
             <span className="flex items-center justify-center">
               <Loader2 className="animate-spin mr-2" /> Enviando... {progress}%

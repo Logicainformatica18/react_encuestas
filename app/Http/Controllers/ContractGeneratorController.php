@@ -7,6 +7,7 @@ use PhpOffice\PhpWord\TemplateProcessor;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Models\Survey;
 
 class ContractGeneratorController extends Controller
 {
@@ -14,40 +15,40 @@ class ContractGeneratorController extends Controller
     {
         try {
             $clientId = $request->input('client_id');
+            $surveyId = $request->input('survey_id');
             $answers = $request->input('answers', []);
 
-            Log::debug('Generando contrato para cliente', ['client_id' => $clientId]);
+            Log::debug('Generando contrato para cliente', ['client_id' => $clientId, 'survey_id' => $surveyId]);
             Log::debug('Respuestas recibidas', $answers);
 
-            if (!$clientId || empty($answers)) {
-                Log::warning('Faltan datos en la solicitud');
+            if (!$clientId || !$surveyId || empty($answers)) {
                 return response()->json(['error' => 'Faltan datos'], 422);
             }
 
-            // Plantilla en public
-            $templatePath = public_path('contratos_plantilla_aybar/CONTRATO_PLANTILLA_RELLENABLE.docx');
-            if (!file_exists($templatePath)) {
-                Log::error('No se encontró la plantilla en: ' . $templatePath);
-                return response()->json(['error' => 'Plantilla no encontrada'], 500);
+            $survey = Survey::findOrFail($surveyId);
+
+            if (!$survey->file_1) {
+                return response()->json(['error' => 'La encuesta no tiene plantilla asignada'], 404);
             }
 
-            Log::debug('Plantilla encontrada en: ' . $templatePath);
+            // Plantilla ubicada en public/plantillas_encuestas/
+            $templatePath = public_path("plantillas_encuestas/{$survey->file_1}");
+
+            if (!file_exists($templatePath)) {
+                Log::error("Archivo de plantilla no encontrado en: {$templatePath}");
+                return response()->json(['error' => 'Archivo de plantilla no encontrado'], 500);
+            }
 
             $template = new TemplateProcessor($templatePath);
-
             $variables = $template->getVariables();
-            Log::debug('Campos detectados en plantilla', $variables);
 
             if (empty($variables)) {
                 Log::error('No se encontraron campos {{campoX}} en la plantilla');
-                return response()->json(['error' => 'No se encontraron campos en plantilla'], 500);
+                return response()->json(['error' => 'No se encontraron campos en la plantilla'], 500);
             }
 
             $values = array_values($answers);
-            Log::debug('Respuestas ordenadas', $values);
-
             if (count($values) < count($variables)) {
-                Log::warning('Respuestas insuficientes para la cantidad de campos');
                 return response()->json(['error' => 'No se han proporcionado suficientes respuestas'], 422);
             }
 
@@ -60,13 +61,14 @@ class ContractGeneratorController extends Controller
             $targetDir = public_path('contratos_aybar');
             if (!File::exists($targetDir)) {
                 File::makeDirectory($targetDir, 0755, true);
-                Log::debug("Carpeta contratos_aybar creada");
+                Log::info("Carpeta creada: contratos_aybar");
             }
 
             $filename = 'Contrato_' . Str::slug(now()) . '_cliente' . $clientId . '.docx';
             $filePath = $targetDir . '/' . $filename;
 
             $template->saveAs($filePath);
+
             Log::info('Contrato generado correctamente', ['archivo' => $filePath]);
 
             return response()->json([

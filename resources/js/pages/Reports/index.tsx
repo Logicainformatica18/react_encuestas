@@ -1,24 +1,25 @@
 import { usePage } from '@inertiajs/react';
-import { useState } from 'react';
-
-interface Props {
-  survey: {
-    id: number;
-    title: string;
-  };
-  results: any[];
-  questions: { [id: number]: string }; // clave: id, valor: pregunta
-}
 
 export default function ReportIndex() {
-  const { survey, results, questions } = usePage<Props>().props;
-  const [showAll, setShowAll] = useState(false);
-
-  const ids = Object.keys(questions).map(Number); // extraemos los ids de las preguntas
+  const { survey, results, questions, types } = usePage().props;
+  const ids = Object.keys(questions).map(Number);
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Reporte de respuestas: {survey.title}</h1>
+
+      {survey.file_1 && (
+        <div className="mb-6">
+          <a
+            href={`/plantillas_encuestas/${survey.file_1}`}
+            className="text-blue-600 underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            📄 Ver plantilla de encuesta
+          </a>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="min-w-full border bg-white text-sm shadow">
@@ -36,11 +37,26 @@ export default function ReportIndex() {
               <tr key={i} className="hover:bg-gray-100">
                 <td className="border px-2 py-1">{i + 1}</td>
                 <td className="border px-2 py-1">{row.client_id}</td>
-                {ids.map((id) => (
-                  <td key={id} className="border px-2 py-1">
-                    {row[`pregunta_${id}`] ?? '-'}
-                  </td>
-                ))}
+                {ids.map((id) => {
+                  const value = row[`pregunta_${id}`];
+                  const isFile = types[id] === 'file';
+                  return (
+                    <td key={id} className="border px-2 py-1">
+                      {isFile && value ? (
+                        <a
+                          href={`/contratos_aybar/${value}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          📎 Archivo
+                        </a>
+                      ) : (
+                        value || '-'
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

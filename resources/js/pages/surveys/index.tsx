@@ -21,6 +21,7 @@ type Survey = {
   date_start?: string;
   date_end?: string;
   front_page?: string;
+  file_1?: string; // ✅ Nuevo campo para plantilla
   visible?: boolean;
   email_confirmation?: boolean;
   password?: string;
@@ -135,13 +136,13 @@ export default function Surveys() {
                 <th className="px-4 py-2 text-black dark:text-white">ID</th>
                 <th className="px-4 py-2 text-black dark:text-white">Título</th>
                 <th className="px-4 py-2 text-black dark:text-white">Enlace público</th>
-
                 <th className="px-4 py-2 text-black dark:text-white">Descripción</th>
                 <th className="px-4 py-2 text-black dark:text-white">Detalle</th>
                 <th className="px-4 py-2 text-black dark:text-white">URL</th>
                 <th className="px-4 py-2 text-black dark:text-white">Inicio</th>
                 <th className="px-4 py-2 text-black dark:text-white">Fin</th>
                 <th className="px-4 py-2 text-black dark:text-white">Portada</th>
+                <th className="px-4 py-2 text-black dark:text-white">Plantilla</th>
                 <th className="px-4 py-2 text-black dark:text-white">Visible</th>
                 <th className="px-4 py-2 text-black dark:text-white">Confirmación</th>
                 <th className="px-4 py-2 text-black dark:text-white">Contraseña</th>
@@ -166,20 +167,19 @@ export default function Surveys() {
                     />
                   </td>
                   <td className="px-4 py-2 text-sm space-y-1">
-  <button
-    onClick={() => router.visit(`/survey-details/${s.id}`)}
-    className="block text-center w-full bg-yellow-500 text-black px-2 py-1 rounded hover:bg-yellow-600 transition"
-  >
-    Ver preguntas
-  </button>
+                    <button
+                      onClick={() => router.visit(`/survey-details/${s.id}`)}
+                      className="block text-center w-full bg-yellow-500 text-black px-2 py-1 rounded hover:bg-yellow-600 transition"
+                    >
+                      Ver preguntas
+                    </button>
 
-  <button
-    onClick={() => router.visit(`/reportes/${s.id}`)}
-    className="block text-center w-full bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition"
-  >
-    Ver reportes
-  </button>
-
+                    <button
+                      onClick={() => router.visit(`/reportes/${s.id}`)}
+                      className="block text-center w-full bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition"
+                    >
+                      Ver reportes
+                    </button>
 
                     <button
                       onClick={() => fetchSurvey(s.id)}
@@ -197,19 +197,18 @@ export default function Surveys() {
                   <td className="px-4 py-2">{s.id}</td>
                   <td className="px-4 py-2">{s.title}</td>
                   <td className="px-4 py-2">
-  {s.url ? (
-    <a
-      href={`/encuesta/${s.url}`}
-      target="_blank"
-      className="text-green-600 hover:underline"
-    >
-      Ver encuesta
-    </a>
-  ) : (
-    <span className="text-gray-400 italic">Sin URL</span>
-  )}
-</td>
-
+                    {s.url ? (
+                      <a
+                        href={`/encuesta/${s.url}`}
+                        target="_blank"
+                        className="text-green-600 hover:underline"
+                      >
+                        Ver encuesta
+                      </a>
+                    ) : (
+                      <span className="text-gray-400 italic">Sin URL</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2">{s.description}</td>
                   <td className="px-4 py-2">{s.detail}</td>
                   <td className="px-4 py-2">{s.url}</td>
@@ -223,6 +222,17 @@ export default function Surveys() {
                         className="text-blue-500 underline"
                       >
                         Ver
+                      </a>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    {s.file_1 && (
+                      <a
+                        href={`/plantillas_encuestas/${s.file_1}`}
+                        target="_blank"
+                        className="text-purple-600 underline"
+                      >
+                        Ver plantilla
                       </a>
                     )}
                   </td>

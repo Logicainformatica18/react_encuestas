@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\NotificationSurveyComplete;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
+
 class SurveyController extends Controller
 {
     public function index()
@@ -27,55 +28,54 @@ class SurveyController extends Controller
         return response()->json(['surveys' => $surveys]);
     }
 
-  
-public function store(Request $request)
-{
-    $request->validate([
-        'title' => 'required|string|max:255',
-        'front_page' => 'nullable|file|max:2048',
-        'visible' => 'nullable|boolean',
-        'email_confirmation' => 'nullable|boolean',
-        'password' => 'nullable|string',
-        'description' => 'nullable|string',
-        'detail' => 'nullable|string',
-        'date_start' => 'nullable|date',
-        'date_end' => 'nullable|date',
-        'type' => 'nullable|string',
-        'state' => 'nullable|string',
-    ]);
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'front_page' => 'nullable|file|max:2048',
+            'file_1' => 'nullable|file|mimes:doc,docx|max:5120', // ✅ validación para plantilla .docx
+            'visible' => 'nullable|boolean',
+            'email_confirmation' => 'nullable|boolean',
+            'password' => 'nullable|string',
+            'description' => 'nullable|string',
+            'detail' => 'nullable|string',
+            'date_start' => 'nullable|date',
+            'date_end' => 'nullable|date',
+            'type' => 'nullable|string',
+            'state' => 'nullable|string',
+        ]);
 
-    $survey = new Survey();
-    $survey->fill($request->except('front_page'));
+        $survey = new Survey();
+        $survey->fill($request->except(['front_page', 'file_1']));
 
-    // Generar URL única basada en el título
-    $baseSlug = Str::slug($request->title);
-    $slug = $baseSlug;
-    $i = 1;
-    while (Survey::where('url', $slug)->exists()) {
-        $slug = $baseSlug . '-' . $i++;
+        // Generar URL única basada en el título
+        $baseSlug = Str::slug($request->title);
+        $slug = $baseSlug;
+        $i = 1;
+        while (Survey::where('url', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $i++;
+        }
+        $survey->url = $slug;
+        $survey->created_by = Auth::id();
+
+        if ($request->hasFile('front_page')) {
+            $survey->front_page = fileStore($request->file('front_page'), 'imageusers');
+        }
+
+        if ($request->hasFile('file_1')) {
+            $survey->file_1 = fileStore($request->file('file_1'), 'plantillas_encuestas');
+        }
+
+        $survey->save();
+
+        $code = 'encuesta-' . $survey->id;
+
+        return response()->json([
+            'message' => '✅ Encuesta creada correctamente',
+            'survey' => $survey,
+            'code' => $code
+        ]);
     }
-    $survey->url = $slug;
-
-    $survey->created_by = Auth::id();
-
-    if ($request->hasFile('front_page')) {
-        $survey->front_page = fileStore($request->file('front_page'), 'imageusers');
-    }
-
-    $survey->save();
-
-    // Generar código temporal solo para devolverlo (ej: encuesta-<ID>)
-    $code = 'encuesta-' . $survey->id;
-
-    return response()->json([
-        'message' => '✅ Encuesta creada correctamente',
-        'survey' => $survey,
-        'code' => $code
-    ]);
-}
-
-
-
 
     public function update(Request $request, $id)
     {
@@ -84,6 +84,7 @@ public function store(Request $request)
         $request->validate([
             'title' => 'required|string|max:255',
             'front_page' => 'nullable|file|max:2048',
+            'file_1' => 'nullable|file|mimes:doc,docx|max:5120', // ✅ validación para plantilla .docx
             'visible' => 'nullable|boolean',
             'email_confirmation' => 'nullable|boolean',
             'password' => 'nullable|string',
@@ -96,16 +97,23 @@ public function store(Request $request)
             'state' => 'nullable|string',
         ]);
 
-        $survey->fill($request->except('front_page'));
+        $survey->fill($request->except(['front_page', 'file_1']));
         $survey->created_by = Auth::id();
 
         if ($request->hasFile('front_page')) {
             $survey->front_page = fileUpdate($request->file('front_page'), 'imageusers', $survey->front_page);
         }
 
+        if ($request->hasFile('file_1')) {
+            $survey->file_1 = fileUpdate($request->file('file_1'), 'plantillas_encuestas', $survey->file_1);
+        }
+
         $survey->save();
 
-        return response()->json(['message' => '✅ Encuesta actualizada correctamente', 'survey' => $survey]);
+        return response()->json([
+            'message' => '✅ Encuesta actualizada correctamente',
+            'survey' => $survey
+        ]);
     }
 
     public function show($id)

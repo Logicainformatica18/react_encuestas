@@ -3,9 +3,14 @@ import { router } from '@inertiajs/react';
 
 export default function Thanks() {
   useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get('slug');
     const timeout = setTimeout(() => {
-      router.visit(document.referrer || '/');
-    }, 6000); // 6 segundos
+      if (slug) {
+        router.visit(`/encuesta/${slug}`);
+      } else {
+        router.visit('/');
+      }
+    }, 2000);
 
     return () => clearTimeout(timeout);
   }, []);
@@ -20,7 +25,7 @@ export default function Thanks() {
           Tus respuestas han sido registradas correctamente.
         </p>
         <p className="text-sm text-gray-500">
-          Serás redirigido automáticamente al formulario...
+          Serás redirigido automáticamente a la encuesta...
         </p>
       </div>
     </div>

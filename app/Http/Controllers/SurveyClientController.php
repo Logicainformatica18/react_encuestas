@@ -40,67 +40,85 @@ public function start(Request $request)
 
     return response()->json(['client_id' => $client->id]);
 }
-    public function index(Request $request, $slug)
-    {
-        $survey = Survey::whereRaw('LOWER(REPLACE(title, " ", "-")) = ?', [$slug])->firstOrFail();
+public function index(Request $request, $slug)
+{
+    $survey = Survey::whereRaw('LOWER(REPLACE(title, " ", "-")) = ?', [$slug])->firstOrFail();
 
-        $survey_details = SurveyDetail::where('survey_id', $survey->id)
-            ->where('visible', '1')
-            ->orderBy('created_at', 'asc')
-            ->get();
+    $survey_details = SurveyDetail::where('survey_id', $survey->id)
+        ->where('visible', '1')
+        ->orderBy('created_at', 'asc')
+        ->get();
 
-            return Inertia::render('SurveyClients/index', [
-                'survey' => $survey,
-                'survey_details' => $survey_details,
-                'survey_count' => $survey_details->count(),
-                'client_id' => session('client_id'),
-            ]);
-            
-            
-            
-    }
+    return Inertia::render('SurveyClients/index', [
+        'survey' => [
+            'id' => $survey->id,
+            'title' => $survey->title,
+            'description' => $survey->description,
+            'state' => $survey->state,
+            'slug' => $slug, // 👈 Esto es lo importante
+        ],
+        'survey_details' => $survey_details,
+        'survey_count' => $survey_details->count(),
+        'client_id' => session('client_id'),
+    ]);
+}
+
 
     public function store(Request $request)
     {
         $request->validate([
             'survey_detail_id' => 'required|exists:survey_details,id',
             'client_id' => 'required|exists:clients,id',
-            'answer' => 'nullable|string',
+            'answer' => 'nullable',
         ]);
-    
+
         $survey_detail = SurveyDetail::findOrFail($request->survey_detail_id);
-    
+
         $survey_client = new SurveyClient();
         $survey_client->survey_detail_id = $survey_detail->id;
         $survey_client->client_id = $request->client_id;
-    
+
         if ($survey_detail->type === 'multiple_option') {
             $option_rpta = explode('-', $request->answer);
             $option_1 = $option_rpta[0] ?? null;
-    
+
             if ($survey_detail->evaluate === 'yes') {
                 $survey_client->option = json_encode($request->answer);
                 $survey_client->answer = ($option_1 == $survey_detail->correct) ? 2 : 0;
             } else {
                 $survey_client->answer = $request->answer;
             }
+
         } elseif ($survey_detail->type === 'selection') {
             $selection_detail_id = explode('-', $request->answer)[0] ?? null;
             $survey_client->selection_detail_id = $selection_detail_id;
             $survey_client->answer = $request->answer;
+
         } elseif ($survey_detail->type === 'email') {
             $survey_client->answer = $request->answer;
-            // Enviar correo de agradecimiento si corresponde
-            // if ($request->answer) {
-            //     Mail::to($request->answer)->send(new AgradecimientoEmail());
-            // }
+
+        } elseif ($survey_detail->type === 'file' && $request->hasFile('answer')) {
+            $file = $request->file('answer');
+            $filename = 'file_' . time() . '_' . $file->getClientOriginalName();
+            $destination = public_path('contratos_aybar');
+            if (!file_exists($destination)) {
+                mkdir($destination, 0755, true);
+            }
+            $file->move($destination, $filename);
+            $survey_client->answer = $filename;
+
         } else {
-            $survey_client->answer = $request->answer;
+            $survey_client->answer = is_string($request->answer)
+                ? strtoupper($request->answer)
+                : $request->answer;
         }
-    
+
         $survey_client->save();
-    
+
         return response()->json(['message' => '✅ Respuesta guardada']);
     }
-    
+
+
+
+
 }
