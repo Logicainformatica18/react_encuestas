@@ -85,38 +85,70 @@ export default function SurveyClientIndex() {
     let completed = 0;
 
     for (const q of survey_details) {
-      try {
-        const form = new FormData();
-        form.append('survey_detail_id', String(q.id));
-        form.append('client_id', String(clientId));
+        try {
+          const form = new FormData();
+          form.append('survey_detail_id', String(q.id));
+          form.append('client_id', String(clientId));
 
-        if (q.type === 'file') {
-          const file = answers[q.id];
-          if (file instanceof File) {
-            form.append('answer', file);
+          if (q.type === 'file') {
+            const file = answers[q.id];
+            if (file instanceof File) {
+              form.append('answer', file);
+            } else {
+              continue;
+            }
           } else {
-            continue;
+            const value = answers[q.id] || '';
+            form.append('answer', typeof value === 'string' ? value.toUpperCase() : value);
           }
-        } else {
-          const value = answers[q.id] || '';
-          form.append('answer', typeof value === 'string' ? value.toUpperCase() : value);
+
+          await axios.post('/survey-clients', form, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+
+          completed++;
+          setProgress(Math.round((completed / total) * 100));
+        } catch (e: any) {
+          setLoading(false); // detener spinner si ocurre error
+
+          if (e.response?.status === 403) {
+            toast.error(
+              '❌ Ya completaste esta encuesta. Si crees que es un error, contáctanos.',
+              {
+                style: {
+                  fontSize: '18px',
+                  backgroundColor: '#ffefef',
+                  color: '#b91c1c',
+                  padding: '16px',
+                  border: '2px solid #f87171',
+                },
+              }
+            );
+            return; // ⛔ detener envío
+          } else {
+            toast.error(`❌ Error al guardar la respuesta de la pregunta ID ${q.id}`);
+          }
         }
-
-        await axios.post('/survey-clients', form, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-
-        completed++;
-        setProgress(Math.round((completed / total) * 100));
-      } catch (e) {
-        toast.error(`❌ Error al guardar la respuesta de la pregunta ID ${q.id}`);
       }
+
+
+    // ✅ REGISTRAR que completó la encuesta
+    try {
+      await axios.post('/survey-complete', {
+        client_id: clientId,
+        survey_id: survey.id,
+      });
+    } catch (e) {
+      toast.error('⚠️ No se pudo registrar la participación (revisar backend)');
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
     toast.success('✅ Encuesta finalizada');
     window.location.href = `/gracias?slug=${survey.slug}`;
   };
+
 
   const handleGenerateDocument = async () => {
     try {

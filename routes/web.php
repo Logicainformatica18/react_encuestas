@@ -199,6 +199,10 @@ Route::put('/reportes/{id}', [ReportController::class, 'update'])
 Route::delete('/reportes/{client_id}', [ReportController::class, 'destroy'])
     ->name('reports.destroy');
 
+
+
+    Route::post('/survey-complete', [SurveyClientController::class, 'completeSurvey']);
+
 /*
 agregar modulos products
 agregar modulo usuarios
