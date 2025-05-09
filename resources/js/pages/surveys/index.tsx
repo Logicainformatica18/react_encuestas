@@ -133,6 +133,7 @@ export default function Surveys() {
                   />
                 </th>
                 <th className="px-4 py-2 text-black dark:text-white">Acciones</th>
+                <th className="px-4 py-2 text-black dark:text-white">Email Permitidos</th>
                 <th className="px-4 py-2 text-black dark:text-white">ID</th>
                 <th className="px-4 py-2 text-black dark:text-white">Título</th>
                 <th className="px-4 py-2 text-black dark:text-white">Enlace público</th>
@@ -165,6 +166,14 @@ export default function Surveys() {
                         );
                       }}
                     />
+                  </td>
+                  <td>
+                  <button
+  onClick={() => router.visit(`/allowed-emails/${s.id}`)}
+  className="block text-center w-full bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 transition"
+>
+  Correos permitidos
+</button>
                   </td>
                   <td className="px-4 py-2 text-sm space-y-1">
                     <button

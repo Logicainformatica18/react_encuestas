@@ -6,5 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class AllowedEmail extends Model
 {
-    //
+    protected $fillable = [
+        'email',
+        'quanty',
+        'survey_id',
+    ];
+
 }

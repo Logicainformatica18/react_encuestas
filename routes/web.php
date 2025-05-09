@@ -7,7 +7,7 @@
     use App\Http\Controllers\SelectionController;
 use App\Http\Controllers\SelectionDetailController;
 use App\Http\Controllers\SurveyClientController;
-
+use App\Http\Controllers\AllowedEmailController;
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -135,7 +135,17 @@ Route::get('/survey-details/export/{survey_id}', [SurveyDetailController::class,
   Route::delete('/selection-details/{id}', [SelectionDetailController::class, 'destroy']);
 
 
+  Route::get('/allowed-emails/fetch', [AllowedEmailController::class, 'fetchPaginated']);
 
+
+  Route::get('/allowed-emails/{survey_id}', [AllowedEmailController::class, 'index'])->name('allowed-emails.index');
+
+    Route::post('/allowed-emails', [AllowedEmailController::class, 'store']);
+    Route::get('/allowed-emails/email/{id}', [AllowedEmailController::class, 'show']); // usa /email/{id} para evitar conflicto con survey_id
+    Route::put('/allowed-emails/{id}', [AllowedEmailController::class, 'update']);
+    Route::delete('/allowed-emails/{id}', [AllowedEmailController::class, 'destroy']);
+    Route::post('/allowed-emails/bulk-delete', [AllowedEmailController::class, 'bulkDelete']);
+    Route::post('/allowed-emails/import', [AllowedEmailController::class, 'import']);
 
 });
 
@@ -153,9 +163,7 @@ Route::get('/encuesta/{slug}/preguntas', [SurveyClientController::class, 'index'
     ->name('surveyclient.index');
 
 
-// web.php
-// Route::get('/encuesta/{slug}/form', [SurveyClientController::class, 'index'])
-//     ->name('surveyclient.index');
+
 
 
 Route::post('/survey-clients', [SurveyClientController::class, 'store']);
