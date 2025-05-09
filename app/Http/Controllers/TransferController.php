@@ -84,7 +84,7 @@ class TransferController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'description' => 'nullable|string',
+            'description' => 'nullable|string', 
             'details' => 'nullable|string',
 
             'sender_firstname' => 'nullable|string|max:255',
