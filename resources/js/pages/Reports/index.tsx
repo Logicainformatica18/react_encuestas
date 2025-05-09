@@ -30,34 +30,48 @@ export default function ReportIndex() {
               {ids.map((id) => (
                 <th key={id} className="px-4 py-2 border">{questions[id]}</th>
               ))}
+                  <th>Enlace encuesta
+                  </th>
             </tr>
+        
+
           </thead>
           <tbody>
             {results.map((row, i) => (
               <tr key={i} className="hover:bg-gray-100">
-                <td className="border px-2 py-1">{i + 1}</td>
-                <td className="border px-2 py-1">{row.client_id}</td>
-                {ids.map((id) => {
-                  const value = row[`pregunta_${id}`];
-                  const isFile = types[id] === 'file';
-                  return (
-                    <td key={id} className="border px-2 py-1">
-                      {isFile && value ? (
-                        <a
-                          href={`/contratos_aybar/${value}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 underline"
-                        >
-                          📎 Archivo
-                        </a>
-                      ) : (
-                        value || '-'
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
+              <td className="border px-2 py-1">{i + 1}</td>
+              <td className="border px-2 py-1">{row.client_id}</td>
+              {ids.map((id) => {
+                const value = row[`pregunta_${id}`];
+                const isFile = types[id] === 'file';
+                return (
+                  <td key={id} className="border px-2 py-1">
+                    {isFile && value ? (
+                      <a
+                        href={`/contratos_aybar/${value}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        📎 Archivo
+                      </a>
+                    ) : (
+                      value || '-'
+                    )}
+                  </td>
+                );
+              })}
+              <td className="border px-2 py-1">
+                <a
+                  href={`/encuesta/${survey.url}/preguntas?client_id=${row.client_id}`}
+                  target="_blank"
+                  className="text-green-600 underline"
+                >
+                  🔗 Ver encuesta
+                </a>
+              </td>
+            </tr>
+            
             ))}
           </tbody>
         </table>

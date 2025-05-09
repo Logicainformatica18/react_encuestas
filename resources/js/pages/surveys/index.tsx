@@ -27,6 +27,7 @@ type Survey = {
   password?: string;
   type?: string;
   state?: string;
+  quanty?:number;
 };
 
 type Pagination<T> = {
@@ -149,6 +150,7 @@ export default function Surveys() {
                 <th className="px-4 py-2 text-black dark:text-white">Contraseña</th>
                 <th className="px-4 py-2 text-black dark:text-white">Tipo</th>
                 <th className="px-4 py-2 text-black dark:text-white">Estado</th>
+                <th className="px-4 py-2 text-black dark:text-white">Cantidad solicitudes</th>
               </tr>
             </thead>
             <tbody>
@@ -250,6 +252,7 @@ export default function Surveys() {
                   <td className="px-4 py-2">{s.password}</td>
                   <td className="px-4 py-2">{s.type}</td>
                   <td className="px-4 py-2">{s.state}</td>
+                  <td className="px-4 py-2">{s.quanty}</td>
                 </tr>
               ))}
             </tbody>

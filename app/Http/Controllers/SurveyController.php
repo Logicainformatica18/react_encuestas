@@ -43,6 +43,7 @@ class SurveyController extends Controller
             'date_end' => 'nullable|date',
             'type' => 'nullable|string',
             'state' => 'nullable|string',
+            'quanty' => 'nullable|integer',
         ]);
 
         $survey = new Survey();
@@ -95,6 +96,7 @@ class SurveyController extends Controller
             'url' => 'nullable|string',
             'type' => 'nullable|string',
             'state' => 'nullable|string',
+            'quanty' => 'nullable|integer',
         ]);
 
         $survey->fill($request->except(['front_page', 'file_1']));

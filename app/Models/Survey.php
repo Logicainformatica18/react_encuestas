@@ -21,6 +21,7 @@ class Survey extends Model
         'type',
         'visible',
         'state',
+        'quanty'
     ];
 
 

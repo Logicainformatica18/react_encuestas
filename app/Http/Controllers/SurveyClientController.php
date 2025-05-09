@@ -9,6 +9,7 @@ use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AgradecimientoEmail;
+use App\Models\AllowedEmail;
 use App\Models\SurveyParticipation;
 use Inertia\Inertia;
 
@@ -21,26 +22,48 @@ class SurveyClientController extends Controller
         'survey' => $survey
     ]);
 }
+
 public function start(Request $request)
 {
     $survey_id = $request->input('survey_id');
-    $code = $request->input('code');
+    $email = $request->input('email');
 
-    $survey = Survey::where('id', $survey_id)->firstOrFail();
+    $survey = Survey::findOrFail($survey_id);
 
-    // Validar código si es privado
-    if ($survey->state === 'private' && $survey->password !== $code) {
-        return response()->json(['error' => 'Código incorrecto'], 403);
+    if ($survey->type === 'privado') {
+        if (!$email) {
+            return response()->json([
+                'error' => '⚠️ El correo es obligatorio para encuestas privadas.'
+            ], 422);
+        }
+
+        $isAllowed = AllowedEmail::where('survey_id', $survey_id)
+            ->where('email', $email)
+            ->exists();
+
+        if (!$isAllowed) {
+            return response()->json([
+                'error' => '🚫 Este correo no está autorizado para acceder a esta encuesta.'
+            ], 403);
+        }
     }
 
-    // Crear client
     $client = new \App\Models\Client();
+    
     $client->save();
 
-    session(['client_id' => $client->id]);
+    session([
+        'client_id' => $client->id,
+        'client_email' => $email,
+    ]);
 
-    return response()->json(['client_id' => $client->id]);
+    return response()->json([
+        'client_id' => $client->id
+    ]);
 }
+
+
+
 public function index(Request $request, $slug)
 {
     $survey = Survey::whereRaw('LOWER(REPLACE(title, " ", "-")) = ?', [$slug])->firstOrFail();
@@ -95,42 +118,62 @@ public function completeSurvey(Request $request)
 
     return response()->json(['message' => '✅ Participación registrada']);
 }
+protected function validateSurveyAccess(Request $request, Survey $survey)
+{
+    $client_id = session('client_id');
+    $client_email = session('client_email');
+
+    // if (!$client_id || !$client_email) {
+    //     return response()->json(['message' => '⚠️ No se ha iniciado correctamente el acceso.'], 403);
+    // }
+
+    // ✅ Si la encuesta es privada, validar que el correo esté permitido
+    if ($survey->type === 'privado') {
+        $isAllowed = AllowedEmail::where('survey_id', $survey->id)
+            ->where('email', $client_email)
+            ->exists();
+
+        if (!$isAllowed) {
+            return response()->json(['message' => '🚫 Este correo no está autorizado para responder esta encuesta.'], 500);
+        }
+    }
+
+    // ✅ Validar cantidad máxima de respuestas
+    $maxQuanty = $survey->quanty ?? 1;
+
+    $existingCount = SurveyClient::whereHas('survey_detail', function ($q) use ($survey) {
+        $q->where('survey_id', $survey->id);
+    })->where('client_id', $client_id)->count();
+
+    if ($existingCount >= $maxQuanty) {
+        return response()->json(['message' => '🚫 Ya completaste esta encuesta.'], 500);
+    }
+
+    // Si tiene respuestas previas, pero aún está dentro del límite, reinicia
+    if ($existingCount > 0 && $existingCount < $maxQuanty) {
+        SurveyClient::whereHas('survey_detail', function ($q) use ($survey) {
+            $q->where('survey_id', $survey->id);
+        })->where('client_id', $client_id)->delete();
+    }
+
+    return null; // ✅ Acceso válido
+}
 
 public function store(Request $request)
 {
-
     $request->validate([
         'survey_detail_id' => 'required|exists:survey_details,id',
         'client_id' => 'required|exists:clients,id',
         'answer' => 'nullable',
+        'email' => 'nullable|email',
     ]);
 
     $survey_detail = SurveyDetail::with('survey')->findOrFail($request->survey_detail_id);
-    $survey_id = $survey_detail->survey_id;
+    $survey = $survey_detail->survey;
 
-    $alreadyCompleted = SurveyParticipation::where('survey_id', $survey_id)
-        ->where('client_id', $request->client_id)
-        ->exists();
-
-    if ($alreadyCompleted) {
-        return response()->json(['message' => '❌ Ya completaste esta encuesta.'], 403);
-    }
-
-
-
-
-    $survey_detail = SurveyDetail::with('survey')->findOrFail($request->survey_detail_id);
-    $survey_id = $survey_detail->survey_id;
-
-    // 🚫 Verificar si el cliente ya respondió alguna pregunta de esta encuesta
-    // $alreadyExists = SurveyClient::where('client_id', $request->client_id)
-    //     ->whereHas('surveyDetail', function ($query) use ($survey_id) {
-    //         $query->where('survey_id', $survey_id);
-    //     })
-    //     ->exists();
-
-    // if ($alreadyExists) {
-    //     return response()->json(['message' => '❌ Ya has completado esta encuesta.'], 403);
+    // Validar acceso y cantidad
+    // if ($response = $this->validateSurveyAccess($request, $survey)) {
+    //     return $response;
     // }
 
     $survey_client = new SurveyClient();
@@ -176,6 +219,7 @@ public function store(Request $request)
 
     return response()->json(['message' => '✅ Respuesta guardada']);
 }
+
 
 
 
