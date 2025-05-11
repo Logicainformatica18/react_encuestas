@@ -19,6 +19,7 @@ interface SurveyDetail {
     selection_detail: { id: number; description: string }[];
   };
   requerid?: string;
+  file_1?: string;
 }
 
 interface Survey {
@@ -58,7 +59,7 @@ export default function SurveyClientIndex() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const processedValue = typeof value === 'string' ? value.toUpperCase() : value;
-    setAnswers((prev) => ({ ...prev, [name]: processedValue }));
+    setAnswers((prev) => ({ ...prev, [Number(name)]: processedValue }));
     setInvalidFields((prev) => prev.filter(id => String(id) !== name));
   };
 
@@ -81,74 +82,45 @@ export default function SurveyClientIndex() {
     setLoading(true);
     setProgress(0);
 
-    const total = survey_details.length;
-    let completed = 0;
+    const form = new FormData();
+    form.append('client_id', String(clientId));
 
-    for (const q of survey_details) {
-        try {
-          const form = new FormData();
-          form.append('survey_detail_id', String(q.id));
-          form.append('client_id', String(clientId));
+   survey_details.forEach((q) => {
+  const answer = answers[q.id];
 
-          if (q.type === 'file') {
-            const file = answers[q.id];
-            if (file instanceof File) {
-              form.append('answer', file);
-            } else {
-              continue;
-            }
-          } else {
-            const value = answers[q.id] || '';
-            form.append('answer', typeof value === 'string' ? value.toUpperCase() : value);
-          }
+  form.append(`answers[${q.id}][survey_detail_id]`, String(q.id));
 
-          await axios.post('/survey-clients', form, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-
-          completed++;
-          setProgress(Math.round((completed / total) * 100));
-        } catch (e: any) {
-          setLoading(false); // detener spinner si ocurre error
-
-          if (e.response?.status === 403) {
-            toast.error(
-              '❌ Ya completaste esta encuesta. Si crees que es un error, contáctanos.',
-              {
-                style: {
-                  fontSize: '18px',
-                  backgroundColor: '#ffefef',
-                  color: '#b91c1c',
-                  padding: '16px',
-                  border: '2px solid #f87171',
-                },
-              }
-            );
-            return; // ⛔ detener envío
-          } else {
-            toast.error(`❌ Error al guardar la respuesta de la pregunta ID ${q.id}`);
-          }
-        }
-      }
+  if (q.type === 'file' && answer instanceof File) {
+    form.append(`answers[${q.id}][answer]`, answer);
+  } else {
+    form.append(`answers[${q.id}][answer]`, typeof answer === 'string' ? answer.toUpperCase() : answer);
+  }
+});
 
 
-    // ✅ REGISTRAR que completó la encuesta
     try {
+      await axios.post('/survey-clients', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
       await axios.post('/survey-complete', {
         client_id: clientId,
         survey_id: survey.id,
       });
-    } catch (e) {
-      toast.error('⚠️ No se pudo registrar la participación (revisar backend)');
+
+      toast.success('✅ Encuesta finalizada');
+      window.location.href = `/gracias?slug=${survey.slug}`;
+    } catch (e: any) {
+      if (e.response?.status === 403) {
+        toast.error('❌ Ya completaste esta encuesta.');
+      } else {
+        toast.error('❌ Error al guardar el formulario completo.');
+        console.error(e);
+      }
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setLoading(false);
-    toast.success('✅ Encuesta finalizada');
-    window.location.href = `/gracias?slug=${survey.slug}`;
   };
-
 
   const handleGenerateDocument = async () => {
     try {
@@ -225,38 +197,37 @@ export default function SurveyClientIndex() {
               </select>
             )}
 
-{q.type === 'file' && (
-  <div className="mt-2">
-    {q.file_1 && (
-      <div className="mb-2">
-        <p className="text-sm text-gray-700 mb-1">Descargue el documento</p>
-        <a
-          href={q.file_1}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:underline"
-        >
-          📎 Descargar archivo generado
-        </a>
-      </div>
-    )}
+            {q.type === 'file' && (
+              <div className="mt-2">
+                {q.file_1 && (
+                  <div className="mb-2">
+                    <p className="text-sm text-gray-700 mb-1">Descargue el documento</p>
+                    <a
+                      href={q.file_1}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      📎 Descargar archivo generado
+                    </a>
+                  </div>
+                )}
 
-    <div className="p-4 border-2 rounded bg-green-100 border-green-500">
-      <label className="block font-semibold text-green-900 mb-1">
-        📎 Adjunta el documento generado
-      </label>
-      <input
-        type="file"
-        name={String(q.id)}
-        onChange={(e) =>
-          setAnswers((prev) => ({ ...prev, [q.id]: e.target.files?.[0] }))
-        }
-        className="block w-full"
-      />
-    </div>
-  </div>
-)}
-
+                <div className="p-4 border-2 rounded bg-green-100 border-green-500">
+                  <label className="block font-semibold text-green-900 mb-1">
+                    📎 Adjunta el documento generado
+                  </label>
+                  <input
+                    type="file"
+                    name={String(q.id)}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({ ...prev, [q.id]: e.target.files?.[0] }))
+                    }
+                    className="block w-full"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
