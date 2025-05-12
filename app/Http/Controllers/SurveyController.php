@@ -15,7 +15,7 @@ class SurveyController extends Controller
 {
     public function index()
     {
-        $surveys = Survey::latest()->paginate(10);
+        $surveys = Survey::orderBy("id","asc")->paginate(10);
 
         return Inertia::render('surveys/index', [
             'surveys' => $surveys,

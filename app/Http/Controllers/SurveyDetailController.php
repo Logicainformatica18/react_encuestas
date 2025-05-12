@@ -22,7 +22,7 @@ class SurveyDetailController extends Controller
 
         $survey_details = SurveyDetail::where('survey_id', $survey_id)
             ->where('visible', '1')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'asc')
             ->paginate(10); // 👈 CAMBIO CLAVE
 
         return Inertia::render('SurveyDetails/index', [

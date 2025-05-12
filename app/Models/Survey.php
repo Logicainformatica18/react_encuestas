@@ -38,28 +38,32 @@ protected $fillable = [
 {
     $startDate = Carbon::now(); // Fecha actual como inicio del contrato
 
-    switch ($this->contract_end_type) {
-        case 'by_day_and_months':
-            if ($this->contract_duration_months && $this->contract_end_day) {
-                return $startDate
-                    ->copy()
-                    ->addMonths($this->contract_duration_months)
-                    ->day($this->contract_end_day);
-            }
-            break;
+   switch ($this->contract_end_type) {
+    case 'by_day_and_months':
+        if ($this->contract_duration_months !== null) {
+            $fecha = $startDate->copy()->addMonths((int) $this->contract_duration_months);
 
-        case 'by_days':
-            if ($this->contract_duration_days) {
-                return $startDate->copy()->addDays($this->contract_duration_days);
+            if ((int) $this->contract_end_day > 0) {
+                $fecha->day((int) $this->contract_end_day);
             }
-            break;
 
-        case 'fixed':
-            if ($this->contract_end_date) {
-                return Carbon::parse($this->contract_end_date);
-            }
-            break;
-    }
+            return $fecha;
+        }
+        break;
+
+    case 'by_days':
+        if ((int) $this->contract_duration_days > 0) {
+            return $startDate->copy()->addDays((int) $this->contract_duration_days);
+        }
+        break;
+
+    case 'fixed':
+        if (!empty($this->contract_end_date)) {
+            return Carbon::parse($this->contract_end_date);
+        }
+        break;
+}
+
 
     return null; // Datos incompletos o inválidos
 }
