@@ -139,10 +139,17 @@ export default function SurveyModal({
             setProgress(0);
             const form = new FormData();
             Object.entries(formData).forEach(([key, value]) => {
-                if (value !== null) {
-                    form.append(key, value);
-                }
-            });
+    if (value !== null) {
+        const numberFields = ['contract_duration_days', 'contract_duration_months', 'contract_end_day', 'quanty'];
+        if (numberFields.includes(key)) {
+            const parsed = parseInt(value as string);
+            console.log(`🧪 Campo numérico '${key}' =`, parsed);
+            form.append(key, isNaN(parsed) ? '0' : String(parsed));
+        } else {
+            form.append(key, value);
+        }
+    }
+});
 
             const url = surveyToEdit ? `/surveys/${surveyToEdit.id}` : '/surveys';
             const method = surveyToEdit ? 'post' : 'post';
@@ -169,7 +176,7 @@ export default function SurveyModal({
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{surveyToEdit ? 'Editar Encuesta' : 'Nueva Encuesta'}</DialogTitle>
                 </DialogHeader>
@@ -183,154 +190,142 @@ export default function SurveyModal({
                     </div>
                 )}
 
-                <div className="grid gap-4 py-4">
-                    {[{ name: 'title', label: 'Título' }, { name: 'description', label: 'Descripción' }, { name: 'detail', label: 'Detalle' }, { name: 'url', label: 'URL' }].map(({ name, label }) => (
-                        <div className="grid grid-cols-4 items-center gap-4" key={name}>
-                            <Label className="text-right">{label}</Label>
-                            <Input className="col-span-3" name={name} value={(formData as any)[name]} onChange={handleChange} />
+                <div className="grid gap-6 py-4 grid-cols-2">
+                    {[ 
+                        { name: 'title', label: 'Título' },
+                        { name: 'description', label: 'Descripción' },
+                        { name: 'detail', label: 'Detalle' },
+                        { name: 'url', label: 'URL' },
+                        { name: 'date_start', label: 'Fecha de Inicio', type: 'date' },
+                        { name: 'date_end', label: 'Fecha de Fin', type: 'date' },
+                        { name: 'password', label: 'Contraseña' },
+                        { name: 'state', label: 'Estado' },
+                        { name: 'quanty', label: 'Cantidad Solicitudes', type: 'number' },
+                    ].map(({ name, label, type }) => (
+                        <div key={name} className="flex flex-col">
+                            <Label className="mb-1">{label}</Label>
+                            <Input
+                                name={name}
+                                type={type || 'text'}
+                                value={(formData as any)[name]}
+                                onChange={handleChange}
+                            />
                         </div>
                     ))}
 
-                    {[{ name: 'date_start', label: 'Fecha de Inicio' }, { name: 'date_end', label: 'Fecha de Fin' }].map(({ name, label }) => (
-                        <div className="grid grid-cols-4 items-center gap-4" key={name}>
-                            <Label className="text-right">{label}</Label>
-                            <Input className="col-span-3" name={name} type="date" value={(formData as any)[name]} onChange={handleChange} />
-                        </div>
-                    ))}
-
-                    {/* Portada */}
-                    <div className="grid grid-cols-4 items-start gap-4">
-                        <Label className="text-right mt-2">Portada</Label>
-                        <div className="col-span-3">
-                            <Input type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} />
-                            {previewUrl && (
-                                <div className="mt-2">
-                                    <img src={previewUrl} alt="Vista previa" className="w-24 h-24 object-cover rounded border" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Plantilla Word */}
-                    <div className="grid grid-cols-4 items-start gap-4">
-                        <Label className="text-right mt-2">Plantilla Word</Label>
-                        <div className="col-span-3">
-                            <Input type="file" accept=".doc,.docx" onChange={handleFile1Change} ref={file1InputRef} />
-                            {file1Name && (
-                                <div className="mt-2 text-sm text-gray-700">{file1Name}</div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Campos adicionales */}
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Visible</Label>
-                        <select name="visible" value={formData.visible} onChange={handleChange} className="col-span-3 border rounded px-3 py-2">
-                            <option value="1">Sí</option>
-                            <option value="0">No</option>
-                        </select>
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Confirmación por Email</Label>
-                        <select name="email_confirmation" value={formData.email_confirmation} onChange={handleChange} className="col-span-3 border rounded px-3 py-2">
-                            <option value="1">Sí</option>
-                            <option value="0">No</option>
-                        </select>
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Contraseña</Label>
-                        <Input className="col-span-3" name="password" value={formData.password} onChange={handleChange} />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Tipo</Label>
-                        <select name="type" value={formData.type} onChange={handleChange} className="col-span-3 border rounded px-3 py-2">
+                    <div className="flex flex-col">
+                        <Label className="mb-1">Tipo</Label>
+                        <select name="type" value={formData.type} onChange={handleChange} className="border rounded px-3 py-2">
                             <option value="">Seleccione...</option>
                             <option value="publico">Público</option>
                             <option value="privado">Privado</option>
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Estado</Label>
-                        <Input className="col-span-3" name="state" value={formData.state} onChange={handleChange} />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Cantidad Solicitudes</Label>
-                        <Input type="number" className="col-span-3" name="quanty" value={formData.quanty} onChange={handleChange} />
-                    </div>
-
-                    {/* Vencimiento de contrato */}
-                    <hr className="my-4" />
-                    <h3 className="text-lg font-semibold mb-2 col-span-4">Vencimiento de Contrato</h3>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Tipo de vencimiento</Label>
-                        <select
-                            name="contract_end_type"
-                            value={formData.contract_end_type}
-                            onChange={handleChange}
-                            className="col-span-3 border rounded px-3 py-2"
-                        >
-                            <option value="by_day_and_months">Por meses + día fijo</option>
-                            <option value="by_days">Por días</option>
-                            <option value="fixed">Fecha fija</option>
+                    <div className="flex flex-col">
+                        <Label className="mb-1">Visible</Label>
+                        <select name="visible" value={formData.visible} onChange={handleChange} className="border rounded px-3 py-2">
+                            <option value="1">Sí</option>
+                            <option value="0">No</option>
                         </select>
                     </div>
 
-                    {formData.contract_end_type === 'by_day_and_months' && (
-                        <>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Duración (meses)</Label>
-                                <Input
-                                    type="number"
-                                    name="contract_duration_months"
-                                    value={formData.contract_duration_months}
-                                    onChange={handleChange}
-                                    className="col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Día del mes</Label>
-                                <Input
-                                    type="number"
-                                    name="contract_end_day"
-                                    value={formData.contract_end_day}
-                                    onChange={handleChange}
-                                    className="col-span-3"
-                                />
-                            </div>
-                        </>
-                    )}
+                    <div className="flex flex-col">
+                        <Label className="mb-1">Confirmación por Email</Label>
+                        <select name="email_confirmation" value={formData.email_confirmation} onChange={handleChange} className="border rounded px-3 py-2">
+                            <option value="1">Sí</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
 
-                    {formData.contract_end_type === 'by_days' && (
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Duración (días)</Label>
-                            <Input
-                                type="number"
-                                name="contract_duration_days"
-                                value={formData.contract_duration_days}
-                                onChange={handleChange}
-                                className="col-span-3"
-                            />
-                        </div>
-                    )}
+                    {/* Portada */}
+                    <div className="flex flex-col col-span-2">
+                        <Label className="mb-1">Portada</Label>
+                        <Input type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} />
+                        {previewUrl && (
+                            <div className="mt-2">
+                                <img src={previewUrl} alt="Vista previa" className="w-24 h-24 object-cover rounded border" />
+                            </div>
+                        )}
+                    </div>
 
-                    {formData.contract_end_type === 'fixed' && (
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Fecha fin exacta</Label>
-                            <Input
-                                type="date"
-                                name="contract_end_date"
-                                value={formData.contract_end_date}
-                                onChange={handleChange}
-                                className="col-span-3"
-                            />
+                    {/* Plantilla Word */}
+                    <div className="flex flex-col col-span-2">
+                        <Label className="mb-1">Plantilla Word</Label>
+                        <Input type="file" accept=".doc,.docx" onChange={handleFile1Change} ref={file1InputRef} />
+                        {file1Name && (
+                            <div className="mt-2 text-sm text-gray-700">{file1Name}</div>
+                        )}
+                    </div>
+
+                    {/* Vencimiento de contrato */}
+                    <div className="col-span-2">
+                        <hr className="my-4" />
+                        <h3 className="text-lg font-semibold mb-2">Vencimiento de Contrato</h3>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col">
+                                <Label className="mb-1">Tipo de vencimiento</Label>
+                                <select
+                                    name="contract_end_type"
+                                    value={formData.contract_end_type}
+                                    onChange={handleChange}
+                                    className="border rounded px-3 py-2"
+                                >
+                                    <option value="by_day_and_months">Por meses + día fijo</option>
+                                    <option value="by_days">Por días</option>
+                                    <option value="fixed">Fecha fija</option>
+                                </select>
+                            </div>
+
+                            {formData.contract_end_type === 'by_day_and_months' && (
+                                <>
+                                    <div className="flex flex-col">
+                                        <Label className="mb-1">Duración (meses)</Label>
+                                        <Input
+                                            type="number"
+                                            name="contract_duration_months"
+                                            value={formData.contract_duration_months}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <Label className="mb-1">Día del mes</Label>
+                                        <Input
+                                            type="number"
+                                            name="contract_end_day"
+                                            value={formData.contract_end_day}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {formData.contract_end_type === 'by_days' && (
+                                <div className="flex flex-col">
+                                    <Label className="mb-1">Duración (días)</Label>
+                                    <Input
+                                        type="number"
+                                        name="contract_duration_days"
+                                        value={formData.contract_duration_days}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            )}
+
+                            {formData.contract_end_type === 'fixed' && (
+                                <div className="flex flex-col">
+                                    <Label className="mb-1">Fecha fin exacta</Label>
+                                    <Input
+                                        type="date"
+                                        name="contract_end_date"
+                                        value={formData.contract_end_date}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 <DialogFooter>

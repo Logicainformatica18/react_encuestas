@@ -28,95 +28,129 @@ class SurveyController extends Controller
         return response()->json(['surveys' => $surveys]);
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'front_page' => 'nullable|file|max:2048',
-            'file_1' => 'nullable|file|mimes:doc,docx|max:5120', // ✅ validación para plantilla .docx
-            'visible' => 'nullable|boolean',
-            'email_confirmation' => 'nullable|boolean',
-            'password' => 'nullable|string',
-            'description' => 'nullable|string',
-            'detail' => 'nullable|string',
-            'date_start' => 'nullable|date',
-            'date_end' => 'nullable|date',
-            'type' => 'nullable|string',
-            'state' => 'nullable|string',
-            'quanty' => 'nullable|integer',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'front_page' => 'nullable|file|max:2048',
+        'file_1' => 'nullable|file|mimes:doc,docx|max:5120',
+        'visible' => 'nullable|boolean',
+        'email_confirmation' => 'nullable|boolean',
+        'password' => 'nullable|string',
+        'description' => 'nullable|string',
+        'detail' => 'nullable|string',
+        'date_start' => 'nullable|date',
+        'date_end' => 'nullable|date',
+        'type' => 'nullable|string',
+        'state' => 'nullable|string',
+        'quanty' => 'nullable|integer',
 
-        $survey = new Survey();
-        $survey->fill($request->except(['front_page', 'file_1']));
+        // ✅ Nuevos campos para vencimiento de contrato
+        'contract_end_type' => 'nullable|string|in:by_day_and_months,by_days,fixed',
+        'contract_duration_months' => 'nullable|integer|min:0',
+        'contract_end_day' => 'nullable|integer|min:1|max:31',
+        'contract_duration_days' => 'nullable|integer|min:0',
+        'contract_end_date' => 'nullable|date',
+    ]);
 
-        // Generar URL única basada en el título
-        $baseSlug = Str::slug($request->title);
-        $slug = $baseSlug;
-        $i = 1;
-        while (Survey::where('url', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $i++;
-        }
-        $survey->url = $slug;
-        $survey->created_by = Auth::id();
+    $survey = new Survey();
+    $survey->fill($request->except(['front_page', 'file_1']));
 
-        if ($request->hasFile('front_page')) {
-            $survey->front_page = fileStore($request->file('front_page'), 'imageusers');
-        }
+    // Generar slug único
+    $baseSlug = Str::slug($request->title);
+    $slug = $baseSlug;
+    $i = 1;
+    while (Survey::where('url', $slug)->exists()) {
+        $slug = $baseSlug . '-' . $i++;
+    }
+    $survey->url = $slug;
+    $survey->created_by = Auth::id();
 
-        if ($request->hasFile('file_1')) {
-            $survey->file_1 = fileStore($request->file('file_1'), 'plantillas_encuestas');
-        }
-
-        $survey->save();
-
-        $code = 'encuesta-' . $survey->id;
-
-        return response()->json([
-            'message' => '✅ Encuesta creada correctamente',
-            'survey' => $survey,
-            'code' => $code
-        ]);
+    // Guardar portada si se envió
+    if ($request->hasFile('front_page')) {
+        $survey->front_page = fileStore($request->file('front_page'), 'imageusers');
     }
 
-    public function update(Request $request, $id)
-    {
-        $survey = Survey::findOrFail($id);
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'front_page' => 'nullable|file|max:2048',
-            'file_1' => 'nullable|file|mimes:doc,docx|max:5120', // ✅ validación para plantilla .docx
-            'visible' => 'nullable|boolean',
-            'email_confirmation' => 'nullable|boolean',
-            'password' => 'nullable|string',
-            'description' => 'nullable|string',
-            'detail' => 'nullable|string',
-            'date_start' => 'nullable|date',
-            'date_end' => 'nullable|date',
-            'url' => 'nullable|string',
-            'type' => 'nullable|string',
-            'state' => 'nullable|string',
-            'quanty' => 'nullable|integer',
-        ]);
-
-        $survey->fill($request->except(['front_page', 'file_1']));
-        $survey->created_by = Auth::id();
-
-        if ($request->hasFile('front_page')) {
-            $survey->front_page = fileUpdate($request->file('front_page'), 'imageusers', $survey->front_page);
-        }
-
-        if ($request->hasFile('file_1')) {
-            $survey->file_1 = fileUpdate($request->file('file_1'), 'plantillas_encuestas', $survey->file_1);
-        }
-
-        $survey->save();
-
-        return response()->json([
-            'message' => '✅ Encuesta actualizada correctamente',
-            'survey' => $survey
-        ]);
+    // Guardar plantilla .docx si se envió
+    if ($request->hasFile('file_1')) {
+        $survey->file_1 = fileStore($request->file('file_1'), 'plantillas_encuestas');
     }
+
+    $survey->save();
+
+    return response()->json([
+        'message' => '✅ Encuesta creada correctamente',
+        'survey' => $survey,
+        'code' => 'encuesta-' . $survey->id,
+    ]);
+}
+
+
+public function update(Request $request, $id)
+{
+    $survey = Survey::findOrFail($id);
+
+    // 🐛 LOG de valores recibidos
+    Log::debug('🛠 Datos recibidos para actualizar encuesta:', [
+        'id' => $id,
+        'contract_end_type' => $request->contract_end_type,
+        'contract_duration_months' => $request->contract_duration_months,
+        'contract_end_day' => $request->contract_end_day,
+        'contract_duration_days' => $request->contract_duration_days,
+        'contract_end_date' => $request->contract_end_date,
+    ]);
+
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'front_page' => 'nullable|file|max:2048',
+        'file_1' => 'nullable|file|mimes:doc,docx|max:5120',
+        'visible' => 'nullable|boolean',
+        'email_confirmation' => 'nullable|boolean',
+        'password' => 'nullable|string',
+        'description' => 'nullable|string',
+        'detail' => 'nullable|string',
+        'date_start' => 'nullable|date',
+        'date_end' => 'nullable|date',
+        'url' => 'nullable|string',
+        'type' => 'nullable|string',
+        'state' => 'nullable|string',
+        'quanty' => 'nullable|integer',
+
+        // ✅ Vencimiento contrato
+        'contract_end_type' => 'nullable|string|in:by_day_and_months,by_days,fixed',
+        'contract_duration_months' => 'nullable',
+        'contract_end_day' => 'nullable',
+        'contract_duration_days' => 'nullable',
+        'contract_end_date' => 'nullable|date',
+    ]);
+
+    // Convertir campos a int seguros antes de guardar
+    $request->merge([
+        'contract_duration_months' => (int) $request->contract_duration_months,
+        'contract_end_day' => (int) $request->contract_end_day,
+        'contract_duration_days' => (int) $request->contract_duration_days,
+    ]);
+
+    $survey->fill($request->except(['front_page', 'file_1']));
+    $survey->created_by = Auth::id();
+
+    if ($request->hasFile('front_page')) {
+        $survey->front_page = fileUpdate($request->file('front_page'), 'imageusers', $survey->front_page);
+    }
+
+    if ($request->hasFile('file_1')) {
+        $survey->file_1 = fileUpdate($request->file('file_1'), 'plantillas_encuestas', $survey->file_1);
+    }
+
+    $survey->save();
+
+    return response()->json([
+        'message' => '✅ Encuesta actualizada correctamente',
+        'survey' => $survey,
+    ]);
+}
+
+
 
     public function show($id)
     {

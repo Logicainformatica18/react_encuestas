@@ -74,11 +74,7 @@ class ContractGeneratorController extends Controller
             $template->setValue('mes_actual', ucfirst($fechaActual->translatedFormat('F')));
             $template->setValue('año_actual', $fechaActual->format('Y'));
 
-            // $template->setValue('dia_contrato', $fechaActual->format('d'));
-            // $template->setValue('mes_contrato', ucfirst($fechaActual->translatedFormat('F')));
-            // $template->setValue('año_contrato', $fechaActual->format('Y'));
-
-            // Fecha fin del contrato (calculada desde el modelo)
+          
             $fechaFin = $survey->contract_end_date_calculated;
 
             if ($fechaFin) {
