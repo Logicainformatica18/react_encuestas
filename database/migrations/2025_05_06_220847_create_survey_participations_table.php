@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable(); // Opcional
             $table->timestamps();
 
-            $table->unique(['survey_id', 'client_id']); // Impide duplicados
+            //$table->unique(['survey_id', 'client_id']); // Impide duplicados
         });
     }
 

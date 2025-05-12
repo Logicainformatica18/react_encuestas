@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\Survey;
+use Carbon\Carbon;
 
 class ContractGeneratorController extends Controller
 {
@@ -31,7 +32,6 @@ class ContractGeneratorController extends Controller
                 return response()->json(['error' => 'La encuesta no tiene plantilla asignada'], 404);
             }
 
-            // Plantilla ubicada en public/plantillas_encuestas/
             $templatePath = public_path("plantillas_encuestas/{$survey->file_1}");
 
             if (!file_exists($templatePath)) {
@@ -47,17 +47,51 @@ class ContractGeneratorController extends Controller
                 return response()->json(['error' => 'No se encontraron campos en la plantilla'], 500);
             }
 
+            // Variables fijas
+            $varsFijas = [
+                'dia_actual', 'mes_actual', 'año_actual',
+                'dia_contrato', 'mes_contrato', 'año_contrato',
+                'dia_fin_contrato', 'mes_fin_contrato', 'año_fin_contrato'
+            ];
+
+            $varsDinamicas = array_filter($variables, fn($v) => !in_array($v, $varsFijas));
             $values = array_values($answers);
-            if (count($values) < count($variables)) {
+
+            if (count($values) < count($varsDinamicas)) {
                 return response()->json(['error' => 'No se han proporcionado suficientes respuestas'], 422);
             }
 
-            foreach ($variables as $index => $var) {
+            foreach ($varsDinamicas as $index => $var) {
                 $valor = $values[$index] ?? '';
                 $template->setValue($var, $valor);
                 Log::debug("Reemplazando $var con $valor");
             }
 
+            // Fecha actual (para "actual" y "contrato")
+            $fechaActual = Carbon::now()->locale(app()->getLocale());
+
+            $template->setValue('dia_actual', $fechaActual->format('d'));
+            $template->setValue('mes_actual', ucfirst($fechaActual->translatedFormat('F')));
+            $template->setValue('año_actual', $fechaActual->format('Y'));
+
+            // $template->setValue('dia_contrato', $fechaActual->format('d'));
+            // $template->setValue('mes_contrato', ucfirst($fechaActual->translatedFormat('F')));
+            // $template->setValue('año_contrato', $fechaActual->format('Y'));
+
+            // Fecha fin del contrato (calculada desde el modelo)
+            $fechaFin = $survey->contract_end_date_calculated;
+
+            if ($fechaFin) {
+                $template->setValue('dia_fin_contrato', $fechaFin->format('d'));
+                $template->setValue('mes_fin_contrato', ucfirst($fechaFin->translatedFormat('F')));
+                $template->setValue('año_fin_contrato', $fechaFin->format('Y'));
+            } else {
+                $template->setValue('dia_fin_contrato', '');
+                $template->setValue('mes_fin_contrato', '');
+                $template->setValue('año_fin_contrato', '');
+            }
+
+            // Guardar el archivo generado
             $targetDir = public_path('contratos_aybar');
             if (!File::exists($targetDir)) {
                 File::makeDirectory($targetDir, 0755, true);

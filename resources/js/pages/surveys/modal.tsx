@@ -32,13 +32,18 @@ export default function SurveyModal({
         date_start: '',
         date_end: '',
         front_page: null as File | null,
-        file_1: null as File | null, // ← Nuevo campo para plantilla Word
+        file_1: null as File | null,
         visible: '1',
         email_confirmation: '0',
         password: '',
         type: '',
         state: '',
         quanty: '0',
+        contract_end_type: 'by_day_and_months',
+        contract_duration_months: '',
+        contract_end_day: '',
+        contract_duration_days: '',
+        contract_end_date: '',
     });
 
     const [uploading, setUploading] = useState(false);
@@ -51,8 +56,8 @@ export default function SurveyModal({
 
     useEffect(() => {
         if (surveyToEdit) {
-            setFormData((prev) => ({
-                ...prev,
+            setFormData({
+                ...formData,
                 title: surveyToEdit.title || '',
                 description: surveyToEdit.description || '',
                 detail: surveyToEdit.detail || '',
@@ -64,10 +69,15 @@ export default function SurveyModal({
                 password: surveyToEdit.password || '',
                 type: surveyToEdit.type || '',
                 state: surveyToEdit.state || '',
-                quanty: surveyToEdit.quanty || 0,
+                quanty: surveyToEdit.quanty || '0',
                 front_page: null,
                 file_1: null,
-            }));
+                contract_end_type: surveyToEdit.contract_end_type ?? 'by_day_and_months',
+                contract_duration_months: surveyToEdit.contract_duration_months ?? '',
+                contract_end_day: surveyToEdit.contract_end_day ?? '',
+                contract_duration_days: surveyToEdit.contract_duration_days ?? '',
+                contract_end_date: surveyToEdit.contract_end_date ?? '',
+            });
 
             setPreviewUrl(surveyToEdit.front_page ? `/imageusers/${surveyToEdit.front_page}` : null);
             setFile1Name(surveyToEdit.file_1 ? surveyToEdit.file_1.split('/').pop() : null);
@@ -90,6 +100,11 @@ export default function SurveyModal({
                 type: '',
                 state: '',
                 quanty: '0',
+                contract_end_type: 'by_day_and_months',
+                contract_duration_months: '',
+                contract_end_day: '',
+                contract_duration_days: '',
+                contract_end_date: '',
             });
             setPreviewUrl(null);
             setFile1Name(null);
@@ -143,7 +158,6 @@ export default function SurveyModal({
 
             onSaved();
             onClose();
-
         } catch (err) {
             console.error(err);
             toast.error('Error al guardar');
@@ -208,6 +222,7 @@ export default function SurveyModal({
                         </div>
                     </div>
 
+                    {/* Campos adicionales */}
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label className="text-right">Visible</Label>
                         <select name="visible" value={formData.visible} onChange={handleChange} className="col-span-3 border rounded px-3 py-2">
@@ -231,27 +246,91 @@ export default function SurveyModal({
 
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label className="text-right">Tipo</Label>
-                        <select
-                            name="type"
-                            value={formData.type}
-                            onChange={handleChange}
-                            className="col-span-3 border rounded px-3 py-2"
-                        >
+                        <select name="type" value={formData.type} onChange={handleChange} className="col-span-3 border rounded px-3 py-2">
                             <option value="">Seleccione...</option>
                             <option value="publico">Público</option>
                             <option value="privado">Privado</option>
                         </select>
                     </div>
 
-
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label className="text-right">Estado</Label>
                         <Input className="col-span-3" name="state" value={formData.state} onChange={handleChange} />
                     </div>
+
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label className="text-right">Cantidad Solicitudes</Label>
-                        <Input type='number' className="col-span-3" name="quanty" value={formData.quanty} onChange={handleChange} />
+                        <Input type="number" className="col-span-3" name="quanty" value={formData.quanty} onChange={handleChange} />
                     </div>
+
+                    {/* Vencimiento de contrato */}
+                    <hr className="my-4" />
+                    <h3 className="text-lg font-semibold mb-2 col-span-4">Vencimiento de Contrato</h3>
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Tipo de vencimiento</Label>
+                        <select
+                            name="contract_end_type"
+                            value={formData.contract_end_type}
+                            onChange={handleChange}
+                            className="col-span-3 border rounded px-3 py-2"
+                        >
+                            <option value="by_day_and_months">Por meses + día fijo</option>
+                            <option value="by_days">Por días</option>
+                            <option value="fixed">Fecha fija</option>
+                        </select>
+                    </div>
+
+                    {formData.contract_end_type === 'by_day_and_months' && (
+                        <>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right">Duración (meses)</Label>
+                                <Input
+                                    type="number"
+                                    name="contract_duration_months"
+                                    value={formData.contract_duration_months}
+                                    onChange={handleChange}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right">Día del mes</Label>
+                                <Input
+                                    type="number"
+                                    name="contract_end_day"
+                                    value={formData.contract_end_day}
+                                    onChange={handleChange}
+                                    className="col-span-3"
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    {formData.contract_end_type === 'by_days' && (
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Duración (días)</Label>
+                            <Input
+                                type="number"
+                                name="contract_duration_days"
+                                value={formData.contract_duration_days}
+                                onChange={handleChange}
+                                className="col-span-3"
+                            />
+                        </div>
+                    )}
+
+                    {formData.contract_end_type === 'fixed' && (
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Fecha fin exacta</Label>
+                            <Input
+                                type="date"
+                                name="contract_end_date"
+                                value={formData.contract_end_date}
+                                onChange={handleChange}
+                                className="col-span-3"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <DialogFooter>

@@ -10,7 +10,7 @@ class CreateAllowedEmailsTable extends Migration
     {
         Schema::create('allowed_emails', function (Blueprint $table) {
             $table->id();
-            $table->string('email')->index();
+            $table->string('email');
             $table->unsignedBigInteger('survey_id');
             $table->integer('quanty')->default(1);
             $table->timestamps();

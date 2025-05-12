@@ -156,7 +156,7 @@ Route::post('/generate-document', [ContractGeneratorController::class, 'generate
 
 // Ruta pública para mostrar la portada de la encuesta
 Route::get('/encuesta/{slug}', [SurveyClientController::class, 'publicHome']);
-Route::post('/survey-clients/start', [SurveyClientController::class, 'start']);
+Route::post('/survey-clients/start', [SurveyClientController::class, 'start'])->middleware('throttle:20,1440');
 
 // Ruta que retorna preguntas y detalles de la encuesta para el frontend
 Route::get('/encuesta/{slug}/preguntas', [SurveyClientController::class, 'index'])
