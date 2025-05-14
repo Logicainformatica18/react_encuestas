@@ -4,6 +4,10 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import Header from '../Template/Header';
+import Footer from '../Template/Footer';
+
+
 
 interface SurveyDetail {
   id: number;
@@ -142,6 +146,8 @@ export default function SurveyClientIndex() {
   }
 
   return (
+    <>
+    <Header/>
     <div className="max-w-4xl mx-auto mt-10 p-4 bg-white shadow rounded space-y-8">
       <h1 className="text-2xl font-bold text-center mb-2">{survey.title}</h1>
       <p className="text-center text-gray-600">{survey.description}</p>
@@ -266,5 +272,7 @@ export default function SurveyClientIndex() {
         </div>
       )}
     </div>
+    <Footer/>
+     </>
   );
 }
