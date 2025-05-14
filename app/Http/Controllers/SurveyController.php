@@ -24,7 +24,7 @@ class SurveyController extends Controller
 
     public function fetchPaginated()
     {
-        $surveys = Survey::latest()->paginate(10);
+        $surveys = Survey::orderBy("id","asc")->paginate(10);
         return response()->json(['surveys' => $surveys]);
     }
 
