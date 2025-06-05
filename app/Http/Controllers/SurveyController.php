@@ -30,28 +30,28 @@ class SurveyController extends Controller
 
 public function store(Request $request)
 {
-    $request->validate([
-        'title' => 'required|string|max:255',
-        'front_page' => 'nullable|file|max:2048',
-        'file_1' => 'nullable|file|mimes:doc,docx|max:5120',
-        'visible' => 'nullable|boolean',
-        'email_confirmation' => 'nullable|boolean',
-        'password' => 'nullable|string',
-        'description' => 'nullable|string',
-        'detail' => 'nullable|string',
-        'date_start' => 'nullable|date',
-        'date_end' => 'nullable|date',
-        'type' => 'nullable|string',
-        'state' => 'nullable|string',
-        'quanty' => 'nullable|integer',
+    // $request->validate([
+    //     'title' => 'required|string|max:255',
+    //     'front_page' => 'nullable|file|max:2048',
+    //     'file_1' => 'nullable|file|mimes:doc,docx|max:5120',
+    //     'visible' => 'nullable|boolean',
+    //     'email_confirmation' => 'nullable|boolean',
+    //     'password' => 'nullable|string',
+    //     'description' => 'nullable|string',
+    //     'detail' => 'nullable|string',
+    //     'date_start' => 'nullable|date',
+    //     'date_end' => 'nullable|date',
+    //     'type' => 'nullable|string',
+    //     'state' => 'nullable|string',
+    //     'quanty' => 'nullable|integer',
 
-        // ✅ Nuevos campos para vencimiento de contrato
-        'contract_end_type' => 'nullable|string|in:by_day_and_months,by_days,fixed',
-        'contract_duration_months' => 'nullable|integer|min:0',
-        'contract_end_day' => 'nullable|integer|min:1|max:31',
-        'contract_duration_days' => 'nullable|integer|min:0',
-        'contract_end_date' => 'nullable|date',
-    ]);
+    //     // ✅ Nuevos campos para vencimiento de contrato
+    //     'contract_end_type' => 'nullable|string|in:by_day_and_months,by_days,fixed',
+    //     'contract_duration_months' => 'nullable|integer|min:0',
+    //     'contract_end_day' => 'nullable|integer|min:1|max:31',
+    //     'contract_duration_days' => 'nullable|integer|min:0',
+    //     'contract_end_date' => 'nullable|date',
+    // ]);
 
     $survey = new Survey();
     $survey->fill($request->except(['front_page', 'file_1']));
