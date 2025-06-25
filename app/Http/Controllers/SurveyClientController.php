@@ -67,9 +67,10 @@ class SurveyClientController extends Controller
 
     public function index(Request $request, $slug)
     {
-        $survey = Survey::whereRaw('LOWER(REPLACE(title, " ", "-")) = ?', [$slug])->firstOrFail();
+     //   $survey = Survey::whereRaw('LOWER(REPLACE(title, " ", "-")) = ?', [$slug])->firstOrFail();
+     $survey = Survey::where('url', $slug)->firstOrFail();
 
-        $survey_details = SurveyDetail::where('survey_id', $survey->id)
+               $survey_details = SurveyDetail::where('survey_id', $survey->id)
             ->where('visible', '1')
             ->orderBy('created_at', 'asc')
             ->get()
